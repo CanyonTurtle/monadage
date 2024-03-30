@@ -1,0 +1,2 @@
+# monadage
+Monadic Image manipulation.
