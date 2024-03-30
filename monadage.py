@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PIL import Image
+import PIL
 from abc import ABC
 from typing import Callable, Type, List, Tuple
 from typing_extensions import assert_never
@@ -11,22 +11,17 @@ class MonadImageVariant(ABC):
     pass
 
 class PngImage(MonadImageVariant):
-    def __init__(self, png: Image):
+    def __init__(self, png: PIL.Image.Image):
         self.png = png
-    def __repr__(self):
-        return self.png
 
 class SvgImage(MonadImageVariant):
     def __init__(self, svg, logical_dimensions: Tuple[int, int]):
         self.svg = svg
         self.logical_dimensions = logical_dimensions
-    def __repr__(self):
-        return self.svg
+
 class ImageError(MonadImageVariant):
     def __init__(self, err_msg):
         self.err_msg = err_msg
-    def __repr__(self):
-        return self.err_msg
 
 class MI:
 
@@ -34,6 +29,7 @@ class MI:
         self.image = image
     
     def bind(self, f: Callable[[MonadImageVariant], MI], mode: Type[MonadImageVariant] = PngImage) -> MI:
+        print(self)
         match self.image:
             case PngImage():
                 if mode == PngImage:
@@ -53,10 +49,7 @@ class MI:
         for func in functions:
             result = MI.bind(result, func)
         return result
-    def __repr__(self):
-        match self.image:
-            case PngImage():
-                return f"Png is: {self.image}"
+
 if __name__ == "__main__":
     png = MI(PngImage("hi"))
     svg = MI(SvgImage("svg", (100, 100)))
