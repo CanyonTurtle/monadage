@@ -27,7 +27,7 @@ class MonadImage:
         self.image = image
     
     def bind(self, f: MFunc) -> MonadImage:
-        print(f"binding {f} to {self.image}")
+        # print(f"binding {f} to {self.image}")
         match self.image:
             case PngImage():
                 if f.get_mode() == PngImage:

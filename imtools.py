@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Callable, Type
 from PIL import Image
 import subprocess
 import os
@@ -11,9 +11,10 @@ from monadage.image_func_def import MFunc
 from monadage.image_variants import PngImage, SvgImage
 from monadage.image_variants import ImageError, ImageVariant
 
+import shlex
 
 
-class save(MFunc):
+class Save(MFunc):
     def __init__(self, outpath: Path):
         self.outpath = outpath
         if self.outpath[-4:] == ".png":
@@ -22,7 +23,8 @@ class save(MFunc):
             self.mode = SvgImage
         else:
             self.mode = ImageError
-        print(f"save mode is {self.mode}")
+        # print(f"save mode is {self.mode}")
+        
     def get_mode(self) -> Type[ImageVariant]:
         return self.mode
 
@@ -31,13 +33,13 @@ class save(MFunc):
             image.png.save(self.outpath)
             return image
         elif isinstance(image, SvgImage):
-            print(f"SVG saved to {image.svg_filepath}")
+            subprocess.call(shlex.split(f"cp {image.svg_filepath} {self.outpath}"))
             return image
         else:
             return ImageError("TODO make image saving.")
         
 
-class mi_quantize_to_n_colors(MFunc):
+class Quantize(MFunc):
 
     def __init__(self, n=2, method=1):
         self.n = n
@@ -60,7 +62,7 @@ class mi_quantize_to_n_colors(MFunc):
         )
 
 
-class mi_remove_background(MFunc):
+class RemoveBackground(MFunc):
     
     def get_mode(self) -> ImageVariant:
         return PngImage
@@ -108,7 +110,7 @@ class mi_remove_background(MFunc):
         return PngImage(image)
 
 
-class apply_grunge(MFunc):
+class ApplyGrunge(MFunc):
     def __init__(self, grunge_img: PngImage | None, grunge_opacity=0.65, translate=(-390, -390),):
         self.grunge_img = grunge_img
         self.grunge_opacity = grunge_opacity
@@ -145,7 +147,7 @@ class apply_grunge(MFunc):
         return PngImage(Image.fromarray(subbed_img, "RGB").resize(source_img.size))
 
 
-class replace_color_with_color_rgba(MFunc):
+class ReplaceColorWithColorRGBA(MFunc):
     def __init__(self, to_replace=(0, 0, 0, 255), rep_with=(255, 255, 255, 255)):
         self.to_replace = to_replace
         self.rep_with = rep_with
@@ -177,3 +179,12 @@ class replace_color_with_color_rgba(MFunc):
 
         # Save the new image
         return PngImage(img)
+
+class PillowsOp(MFunc):
+    def get_mode(self) -> ImageVariant:
+        return PngImage
+    def __init__(self, op: Callable[[Image.Image], Image.Image]) -> None:
+        self.op = op
+    def __call__(self, image: any) -> ImageVariant:
+        assert isinstance(image, PngImage)
+        return PngImage(self.op(image.png))
