@@ -1,6 +1,7 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
+from typing import Tuple
 
-def add_corners(image, radicus_pct=15):
+def add_corners(image, radius_pct=15):
 
     # Load the image
     # image = Image.open("image.jpg")
@@ -11,7 +12,7 @@ def add_corners(image, radicus_pct=15):
     # Draw a rounded rectangle on the mask
     draw = ImageDraw.Draw(mask)
     MARGIN = 0
-    RADIUS = min(list(image.size)) * 15 // 100
+    RADIUS = min(list(image.size)) * radius_pct // 100
     draw.rounded_rectangle((MARGIN, MARGIN, image.width - MARGIN, image.height - MARGIN), radius=RADIUS, fill=0)
     image_mask = draw._image
     # Apply the mask to the image
@@ -19,4 +20,12 @@ def add_corners(image, radicus_pct=15):
 
     # Save the image
     # image.save("image_with_rounded_bezels.jpg")
+    return image
+
+def add_text(image, text: str, font_file:str=None, font_size: int = 96, pos: Tuple[int, int] = (10, 10), color= (0, 0, 0)):
+    draw = ImageDraw.Draw(image)
+    font = None
+    if font_file is not None:
+        font = ImageFont.truetype(font_file, font_size)
+    draw.text(pos, text, color, font=font)
     return image
