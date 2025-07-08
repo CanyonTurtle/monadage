@@ -178,34 +178,55 @@ def create_web_app():
                 'error': str(e)
             }), 500
 
-    @app.route('/api/download/<filename>')
+    @app.route('/api/download/<path:filename>')
     def download_file(filename):
         """Download processed file"""
         try:
-            filename = secure_filename(filename)
-            filepath = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+            from urllib.parse import unquote
+            # URL decode the filename first
+            decoded_filename = unquote(filename)
+            
+            # Don't use secure_filename as it changes the filename - just validate the path
+            if '..' in decoded_filename or '/' in decoded_filename or '\\' in decoded_filename:
+                return jsonify({'error': 'Invalid filename'}), 400
+            
+            filepath = os.path.join(app.config['OUTPUT_FOLDER'], decoded_filename)
             
             if os.path.exists(filepath):
                 return send_file(filepath, as_attachment=True)
             else:
-                return jsonify({'error': 'File not found'}), 404
+                # Debug: list what files actually exist
+                existing_files = os.listdir(app.config['OUTPUT_FOLDER'])
+                print(f"File not found: '{decoded_filename}'")
+                print(f"Existing files: {existing_files}")
+                return jsonify({
+                    'error': 'File not found',
+                    'requested': decoded_filename,
+                    'available': existing_files
+                }), 404
                 
         except Exception as e:
             return jsonify({'error': str(e)}), 500
 
-    @app.route('/api/preview/<filename>')
+    @app.route('/api/preview/<path:filename>')
     def preview_file(filename):
         """Preview uploaded or processed file"""
         try:
-            filename = secure_filename(filename)
+            from urllib.parse import unquote
+            # URL decode the filename first
+            decoded_filename = unquote(filename)
+            
+            # Basic path validation
+            if '..' in decoded_filename or '/' in decoded_filename or '\\' in decoded_filename:
+                return jsonify({'error': 'Invalid filename'}), 400
             
             # Check upload folder first
-            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], decoded_filename)
             if os.path.exists(upload_path):
                 return send_file(upload_path)
             
             # Check output folder
-            output_path = os.path.join(app.config['OUTPUT_FOLDER'], filename)
+            output_path = os.path.join(app.config['OUTPUT_FOLDER'], decoded_filename)
             if os.path.exists(output_path):
                 return send_file(output_path)
             

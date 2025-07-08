@@ -327,7 +327,7 @@ class PipelineEditor {
             const resultItem = document.createElement('div');
             resultItem.className = 'result-item';
             resultItem.innerHTML = `
-                <img src="/api/preview/${result.processed_name}" alt="${result.processed_name}">
+                <img src="/api/preview/${encodeURIComponent(result.processed_name)}" alt="${result.processed_name}">
                 <div class="info">
                     <div class="name">${result.processed_name}</div>
                     <div style="color: #666; font-size: 0.9em; margin: 5px 0;">
@@ -336,7 +336,7 @@ class PipelineEditor {
                     <div style="color: #999; font-size: 0.8em; margin: 5px 0;">
                         Size: ${(result.size / 1024).toFixed(1)} KB
                     </div>
-                    <a href="/api/download/${result.processed_name}" class="download">
+                    <a href="/api/download/${encodeURIComponent(result.processed_name)}" class="download">
                         📥 Download
                     </a>
                 </div>
