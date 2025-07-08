@@ -26,17 +26,31 @@ class DatamoshPipeline(Pipeline):
         """Create random motion vectors for datamoshing"""
         height, width = img.size[1], img.size[0]
         
-        # Create motion vector field
-        motion_x = np.random.randint(-10, 11, (height // 8, width // 8))
-        motion_y = np.random.randint(-10, 11, (height // 8, width // 8))
+        # Create motion vector field - ensure we have at least 1x1 grid
+        grid_height = max(1, height // 8)
+        grid_width = max(1, width // 8)
         
-        # Upscale motion vectors
+        motion_x = np.random.randint(-10, 11, (grid_height, grid_width))
+        motion_y = np.random.randint(-10, 11, (grid_height, grid_width))
+        
+        # Upscale motion vectors using proper dimensions
         motion_x = np.repeat(np.repeat(motion_x, 8, axis=0), 8, axis=1)
         motion_y = np.repeat(np.repeat(motion_y, 8, axis=0), 8, axis=1)
         
-        # Trim to exact image size
+        # Resize to exact image size using proper array slicing
         motion_x = motion_x[:height, :width]
         motion_y = motion_y[:height, :width]
+        
+        # If the upscaled arrays are smaller than the image, pad them
+        if motion_x.shape[0] < height or motion_x.shape[1] < width:
+            motion_x_padded = np.zeros((height, width), dtype=motion_x.dtype)
+            motion_y_padded = np.zeros((height, width), dtype=motion_y.dtype)
+            
+            motion_x_padded[:motion_x.shape[0], :motion_x.shape[1]] = motion_x
+            motion_y_padded[:motion_y.shape[0], :motion_y.shape[1]] = motion_y
+            
+            motion_x = motion_x_padded
+            motion_y = motion_y_padded
         
         return motion_x, motion_y
     
@@ -66,24 +80,28 @@ class DatamoshPipeline(Pipeline):
         data = np.array(img)
         height, width = data.shape[:2]
         
-        # Process in 8x8 blocks
-        for y in range(0, height - 8, 8):
-            for x in range(0, width - 8, 8):
+        # Process in 8x8 blocks, handle edge cases properly
+        for y in range(0, height, 8):
+            for x in range(0, width, 8):
+                # Calculate actual block size (may be smaller at edges)
+                block_height = min(8, height - y)
+                block_width = min(8, width - x)
+                
                 if random.random() < 0.1:  # 10% of blocks get corrupted
                     # Get block
-                    block = data[y:y+8, x:x+8]
+                    block = data[y:y+block_height, x:x+block_width]
                     
                     # Corrupt block by reducing to single color or shifting
                     if random.random() < 0.5:
                         # Reduce to average color
                         avg_color = np.mean(block, axis=(0, 1))
-                        data[y:y+8, x:x+8] = avg_color
+                        data[y:y+block_height, x:x+block_width] = avg_color
                     else:
                         # Shift block content
                         shift_x = random.randint(-2, 2)
                         shift_y = random.randint(-2, 2)
                         shifted_block = np.roll(np.roll(block, shift_x, axis=1), shift_y, axis=0)
-                        data[y:y+8, x:x+8] = shifted_block
+                        data[y:y+block_height, x:x+block_width] = shifted_block
         
         return Image.fromarray(data)
     
