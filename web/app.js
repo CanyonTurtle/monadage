@@ -32,6 +32,7 @@ class PipelineEditor {
         this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
 
         // Global drag and drop handlers
+        document.addEventListener('dragenter', this.handleDocumentDragEnter.bind(this));
         document.addEventListener('dragover', this.handleDocumentDragOver.bind(this));
         document.addEventListener('dragleave', this.handleDocumentDragLeave.bind(this));
         document.addEventListener('drop', this.handleDocumentDrop.bind(this));
@@ -105,6 +106,11 @@ class PipelineEditor {
         window.history.replaceState({}, '', url);
     }
 
+    handleDocumentDragEnter(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
     handleDocumentDragOver(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -119,9 +125,11 @@ class PipelineEditor {
         );
         
         if (isOverUploadArea) {
+            e.dataTransfer.dropEffect = 'copy';
             this.dropOverlay.classList.remove('opacity-0');
             this.dropOverlay.classList.add('opacity-100');
         } else {
+            e.dataTransfer.dropEffect = 'none';
             this.dropOverlay.classList.remove('opacity-100');
             this.dropOverlay.classList.add('opacity-0');
         }
