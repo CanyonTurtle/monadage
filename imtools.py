@@ -17,9 +17,9 @@ import shlex
 class Save(MFunc):
     def __init__(self, outpath: Path):
         self.outpath = outpath
-        if self.outpath[-4:] == ".png":
+        if str(self.outpath).endswith(".png"):
             self.mode = PngImage
-        elif self.outpath[-4:] == ".svg":
+        elif str(self.outpath).endswith(".svg"):
             self.mode = SvgImage
         else:
             self.mode = ImageError
