@@ -453,7 +453,24 @@ class PipelineEditor {
     updateProcessButton() {
         const hasFiles = this.files.length > 0;
         const hasPipeline = this.pipeline.length > 0;
-        this.processBtn.disabled = !(hasFiles && hasPipeline);
+        const canProcess = hasFiles && hasPipeline;
+        
+        this.processBtn.disabled = !canProcess;
+        
+        // Update button text and styling based on state
+        if (!hasFiles && !hasPipeline) {
+            this.processBtn.textContent = '📁 Upload images and add pipeline steps';
+            this.processBtn.className = 'w-full bg-gray-400 text-white font-bold py-4 md:py-5 px-6 rounded-xl cursor-not-allowed';
+        } else if (!hasFiles) {
+            this.processBtn.textContent = '📁 Upload images to process';
+            this.processBtn.className = 'w-full bg-gray-400 text-white font-bold py-4 md:py-5 px-6 rounded-xl cursor-not-allowed';
+        } else if (!hasPipeline) {
+            this.processBtn.textContent = '🔧 Add pipeline steps to process';
+            this.processBtn.className = 'w-full bg-gray-400 text-white font-bold py-4 md:py-5 px-6 rounded-xl cursor-not-allowed';
+        } else {
+            this.processBtn.textContent = '🚀 Process Images';
+            this.processBtn.className = 'w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold py-4 md:py-5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg';
+        }
     }
 
     async processImages() {
