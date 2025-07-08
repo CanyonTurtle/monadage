@@ -5,6 +5,17 @@ from .cool_variations import CoolVariationsPipeline
 from .four_corners import FourCornersPipeline
 from .mosaic import MosaicPipeline
 from .dynamic_mosaic import DynamicMosaicPipeline
+from .glitch_art import GlitchArtPipeline
+from .ascii_art import AsciiArtPipeline
+from .vaporwave import VaporwavePipeline
+from .kaleidoscope import KaleidoscopePipeline
+from .pixel_sort import PixelSortPipeline
+from .oil_painting import OilPaintingPipeline
+from .neon_edge import NeonEdgePipeline
+from .datamosh import DatamoshPipeline
+from .fractal_spiral import FractalSpiralPipeline
+from .comic_book import ComicBookPipeline
+from .geometric_telescope import GeometricTelescopePipeline
 
 
 # Registry of available pipelines
@@ -13,6 +24,17 @@ PIPELINES: Dict[str, Type[Pipeline]] = {
     "four_corners": FourCornersPipeline,
     "mosaic": MosaicPipeline,
     "dynamic_mosaic": DynamicMosaicPipeline,
+    "glitch_art": GlitchArtPipeline,
+    "ascii_art": AsciiArtPipeline,
+    "vaporwave": VaporwavePipeline,
+    "kaleidoscope": KaleidoscopePipeline,
+    "pixel_sort": PixelSortPipeline,
+    "oil_painting": OilPaintingPipeline,
+    "neon_edge": NeonEdgePipeline,
+    "datamosh": DatamoshPipeline,
+    "fractal_spiral": FractalSpiralPipeline,
+    "comic_book": ComicBookPipeline,
+    "geometric_telescope": GeometricTelescopePipeline,
 }
 
 

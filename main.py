@@ -85,10 +85,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument("input_folder", help="Input folder containing images")
-    parser.add_argument("output_folder", help="Output folder for processed images")
-    parser.add_argument("--pipeline", "-p", required=True, help="Pipeline(s) to use (comma-separated for composition, e.g., 'cool_variations,mosaic')")
+    parser.add_argument("input_folder", nargs='?', help="Input folder containing images")
+    parser.add_argument("output_folder", nargs='?', help="Output folder for processed images")
+    parser.add_argument("--pipeline", "-p", help="Pipeline(s) to use (comma-separated for composition, e.g., 'cool_variations,mosaic')")
     parser.add_argument("--list-pipelines", action="store_true", help="List available pipelines")
+    parser.add_argument("--web", action="store_true", help="Launch web interface on http://localhost:5000")
+    parser.add_argument("--port", type=int, default=5000, help="Port for web interface (default: 5000)")
+    parser.add_argument("--no-browser", action="store_true", help="Don't automatically open browser")
     
     args = parser.parse_args()
     
@@ -98,6 +101,31 @@ def main():
         for name, description in list_pipelines().items():
             print(f"  {name}: {description}")
         return
+    
+    # Launch web interface if requested
+    if args.web:
+        try:
+            from web_server import run_web_server
+            run_web_server(
+                port=args.port,
+                debug=False,
+                open_browser=not args.no_browser
+            )
+        except ImportError as e:
+            print(f"Error: Could not import web server: {e}")
+            print("Make sure Flask and Flask-CORS are installed.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"Error starting web server: {e}")
+            sys.exit(1)
+        return
+    
+    # Validate required arguments for CLI mode
+    if not args.input_folder or not args.output_folder or not args.pipeline:
+        print("Error: input_folder, output_folder, and --pipeline are required for CLI mode")
+        print("Use --web to launch the web interface, or --list-pipelines to see available pipelines")
+        parser.print_help()
+        sys.exit(1)
     
     # Validate input folder exists
     if not os.path.exists(args.input_folder):
