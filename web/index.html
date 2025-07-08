@@ -24,19 +24,30 @@
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
             <!-- Input Files Section -->
-            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8">
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 relative" id="upload-area">
                 <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-500 pb-3">
                     📁 Input Files
                 </h2>
                 
                 <div class="border-3 border-dashed border-blue-500 rounded-xl p-8 md:p-12 text-center cursor-pointer transition-all duration-300 hover:border-purple-600 hover:bg-blue-50 mb-6" 
-                     id="upload-area">
+                     id="upload-drop-zone">
                     <div class="text-4xl md:text-5xl text-blue-500 mb-4">📷</div>
                     <p class="text-gray-600 text-sm md:text-base">Drag & drop images here or click to browse</p>
                     <input type="file" id="file-input" multiple accept="image/*" class="hidden">
                 </div>
                 
                 <div id="file-list" class="space-y-2"></div>
+                
+                <!-- Full section drop overlay -->
+                <div class="absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-200 rounded-2xl" 
+                     id="drop-overlay">
+                    <div class="w-full h-full border-4 border-purple-600 border-solid bg-purple-100/50 rounded-2xl flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-5xl md:text-6xl text-purple-600 mb-4">📁</div>
+                            <p class="text-purple-800 text-lg md:text-xl font-semibold">Drop images anywhere in this area</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Pipeline Builder Section -->

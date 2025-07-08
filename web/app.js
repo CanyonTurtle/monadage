@@ -14,6 +14,8 @@ class PipelineEditor {
 
     initializeElements() {
         this.uploadArea = document.getElementById('upload-area');
+        this.uploadDropZone = document.getElementById('upload-drop-zone');
+        this.dropOverlay = document.getElementById('drop-overlay');
         this.fileInput = document.getElementById('file-input');
         this.fileList = document.getElementById('file-list');
         this.pipelineBuilder = document.getElementById('pipeline-builder');
@@ -26,8 +28,9 @@ class PipelineEditor {
 
     setupEventListeners() {
         // File upload handlers
-        this.uploadArea.addEventListener('click', () => this.fileInput.click());
+        this.uploadDropZone.addEventListener('click', () => this.fileInput.click());
         this.uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+        this.uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
         this.uploadArea.addEventListener('drop', this.handleDrop.bind(this));
         this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
 
@@ -102,12 +105,26 @@ class PipelineEditor {
 
     handleDragOver(e) {
         e.preventDefault();
-        this.uploadArea.classList.add('border-purple-600', 'bg-blue-50');
+        e.stopPropagation();
+        this.dropOverlay.classList.remove('opacity-0');
+        this.dropOverlay.classList.add('opacity-100');
+    }
+
+    handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only hide overlay if leaving the entire upload area
+        if (!this.uploadArea.contains(e.relatedTarget)) {
+            this.dropOverlay.classList.remove('opacity-100');
+            this.dropOverlay.classList.add('opacity-0');
+        }
     }
 
     handleDrop(e) {
         e.preventDefault();
-        this.uploadArea.classList.remove('border-purple-600', 'bg-blue-50');
+        e.stopPropagation();
+        this.dropOverlay.classList.remove('opacity-100');
+        this.dropOverlay.classList.add('opacity-0');
         const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
         this.addFiles(files);
     }
