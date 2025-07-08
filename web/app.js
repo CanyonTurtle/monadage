@@ -29,10 +29,12 @@ class PipelineEditor {
     setupEventListeners() {
         // File upload handlers
         this.uploadDropZone.addEventListener('click', () => this.fileInput.click());
-        this.uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
-        this.uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
-        this.uploadArea.addEventListener('drop', this.handleDrop.bind(this));
         this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+        // Global drag and drop handlers
+        document.addEventListener('dragover', this.handleDocumentDragOver.bind(this));
+        document.addEventListener('dragleave', this.handleDocumentDragLeave.bind(this));
+        document.addEventListener('drop', this.handleDocumentDrop.bind(this));
 
         // Pipeline builder handlers
         this.addStepBtn.addEventListener('click', this.addPipelineStep.bind(this));
@@ -103,30 +105,60 @@ class PipelineEditor {
         window.history.replaceState({}, '', url);
     }
 
-    handleDragOver(e) {
+    handleDocumentDragOver(e) {
         e.preventDefault();
         e.stopPropagation();
-        this.dropOverlay.classList.remove('opacity-0');
-        this.dropOverlay.classList.add('opacity-100');
-    }
-
-    handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        // Only hide overlay if leaving the entire upload area
-        if (!this.uploadArea.contains(e.relatedTarget)) {
+        
+        // Check if we're over the upload area
+        const uploadRect = this.uploadArea.getBoundingClientRect();
+        const isOverUploadArea = (
+            e.clientX >= uploadRect.left &&
+            e.clientX <= uploadRect.right &&
+            e.clientY >= uploadRect.top &&
+            e.clientY <= uploadRect.bottom
+        );
+        
+        if (isOverUploadArea) {
+            this.dropOverlay.classList.remove('opacity-0');
+            this.dropOverlay.classList.add('opacity-100');
+        } else {
             this.dropOverlay.classList.remove('opacity-100');
             this.dropOverlay.classList.add('opacity-0');
         }
     }
 
-    handleDrop(e) {
+    handleDocumentDragLeave(e) {
         e.preventDefault();
         e.stopPropagation();
+        
+        // Hide overlay when leaving the window
+        if (e.clientX === 0 || e.clientY === 0 || 
+            e.clientX === window.innerWidth || e.clientY === window.innerHeight) {
+            this.dropOverlay.classList.remove('opacity-100');
+            this.dropOverlay.classList.add('opacity-0');
+        }
+    }
+
+    handleDocumentDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Check if we're dropping over the upload area
+        const uploadRect = this.uploadArea.getBoundingClientRect();
+        const isOverUploadArea = (
+            e.clientX >= uploadRect.left &&
+            e.clientX <= uploadRect.right &&
+            e.clientY >= uploadRect.top &&
+            e.clientY <= uploadRect.bottom
+        );
+        
         this.dropOverlay.classList.remove('opacity-100');
         this.dropOverlay.classList.add('opacity-0');
-        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-        this.addFiles(files);
+        
+        if (isOverUploadArea) {
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            this.addFiles(files);
+        }
     }
 
     handleFileSelect(e) {
