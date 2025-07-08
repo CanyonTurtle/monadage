@@ -128,20 +128,48 @@ class PipelineEditor {
     }
 
     removeFile(index) {
+        // Clean up object URL to prevent memory leaks
+        const fileItem = this.fileList.children[index];
+        if (fileItem) {
+            const img = fileItem.querySelector('img');
+            if (img && img.src.startsWith('blob:')) {
+                URL.revokeObjectURL(img.src);
+            }
+        }
+        
         this.files.splice(index, 1);
         this.updateFileList();
         this.updateProcessButton();
     }
 
     updateFileList() {
+        // Clean up existing object URLs
+        this.fileList.querySelectorAll('img[src^="blob:"]').forEach(img => {
+            URL.revokeObjectURL(img.src);
+        });
+        
         this.fileList.innerHTML = '';
         this.files.forEach((file, index) => {
             const fileItem = document.createElement('div');
-            fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+            fileItem.className = 'bg-gray-50 rounded-lg p-4 mb-3 last:mb-0';
+            
+            // Create preview URL for the image
+            const previewUrl = URL.createObjectURL(file);
+            
             fileItem.innerHTML = `
-                <span class="font-medium text-gray-700 truncate flex-1 mr-3">${file.name}</span>
-                <button class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors flex-shrink-0" 
-                        onclick="pipelineEditor.removeFile(${index})">×</button>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-medium text-gray-700 truncate flex-1 mr-3">${file.name}</span>
+                    <button class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors flex-shrink-0" 
+                            onclick="pipelineEditor.removeFile(${index})">×</button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <img src="${previewUrl}" alt="${file.name}" 
+                         class="w-16 h-16 object-cover rounded-lg border border-gray-300 flex-shrink-0">
+                    <div class="flex-1 text-sm text-gray-600">
+                        <div>Size: ${(file.size / 1024).toFixed(1)} KB</div>
+                        <div>Type: ${file.type}</div>
+                    </div>
+                </div>
             `;
             this.fileList.appendChild(fileItem);
         });
