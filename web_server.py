@@ -143,15 +143,15 @@ def create_web_app():
                 if not os.path.exists(input_path):
                     continue
                 
-                # Generate output filename
+                # Get pipeline instance first to get correct filename
+                pipeline = get_pipeline(pipeline_steps)
+                
+                # Generate output filename using pipeline's naming convention
                 base_name = file_info['original_name'].rsplit('.', 1)[0]
-                output_filename = f"{base_name}_{pipeline_string.replace(',', '_')}.png"
+                output_filename = f"{base_name}{pipeline.get_output_suffix()}{pipeline.get_output_extension()}"
                 output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_filename)
                 
                 try:
-                    # Get pipeline instance
-                    pipeline = get_pipeline(pipeline_steps)
-                    
                     # Process the image
                     pipeline.process_image(Path(input_path), Path(output_path))
                     
