@@ -199,7 +199,7 @@ class PipelineEditor {
             </div>
             <div class="flex items-center justify-center gap-2 md:gap-4">
                 <div class="text-center">
-                    <img src="/examples/source.png" 
+                    <img src="/examples/original.png" 
                          alt="Original" 
                          class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border-2 border-white/30 mb-1">
                     <div class="text-xs opacity-75">Original</div>
