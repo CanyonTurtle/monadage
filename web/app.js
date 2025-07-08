@@ -172,29 +172,45 @@ class PipelineEditor {
         }
 
         const stepIndex = this.pipeline.findIndex(s => s.id === step.id);
+        const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
+        const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
+        
         stepElement.innerHTML = `
             <div class="flex justify-between items-center mb-3">
-                <div class="flex items-center">
-                    <div class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3">
+                <div class="flex items-center min-w-0 flex-1">
+                    <div class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3 flex-shrink-0">
                         ${stepIndex + 1}
                     </div>
-                    <strong class="text-sm md:text-base">Processing Step</strong>
+                    <div class="min-w-0 flex-1">
+                        <strong class="text-sm md:text-base block truncate">${step.pipeline}</strong>
+                        <span class="text-xs opacity-75 block truncate">${pipelineDescription}</span>
+                    </div>
                 </div>
-                <button class="bg-red-500/80 hover:bg-red-600/80 px-3 py-1 rounded-md text-sm transition-colors" 
+                <button class="bg-red-500/80 hover:bg-red-600/80 px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
                         onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
             </div>
-            <div class="flex flex-col md:flex-row gap-3">
-                <select class="flex-1 p-3 border-2 border-white/30 rounded-lg bg-white/10 text-white text-sm backdrop-blur-sm" 
+            <div class="mb-3">
+                <select class="w-full p-3 border-2 border-white/30 rounded-lg bg-white/10 text-white text-sm backdrop-blur-sm" 
                         onchange="pipelineEditor.updateStepPipeline(${step.id}, this.value)">
                     ${this.pipelines.map(p => 
                         `<option value="${p.name}" ${p.name === step.pipeline ? 'selected' : ''} class="bg-gray-800 text-white">${p.name} - ${p.description}</option>`
                     ).join('')}
                 </select>
-                <div class="flex-shrink-0">
+            </div>
+            <div class="flex items-center justify-center gap-2 md:gap-4">
+                <div class="text-center">
+                    <img src="/examples/source.png" 
+                         alt="Original" 
+                         class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border-2 border-white/30 mb-1">
+                    <div class="text-xs opacity-75">Original</div>
+                </div>
+                <div class="text-white/60 text-lg md:text-xl">→</div>
+                <div class="text-center">
                     <img id="preview-${step.id}" src="/examples/source_${step.pipeline}.png" 
                          alt="${step.pipeline} preview" 
-                         class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg border-2 border-white/30"
+                         class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border-2 border-white/30 mb-1"
                          onerror="this.style.display='none'">
+                    <div class="text-xs opacity-75 truncate max-w-[4rem] md:max-w-[5rem]">${step.pipeline}</div>
                 </div>
             </div>
         `;
@@ -219,12 +235,31 @@ class PipelineEditor {
             step.pipeline = pipelineName;
             this.saveStateToURL();
             
-            // Update the preview image
-            const previewImg = document.getElementById(`preview-${stepId}`);
-            if (previewImg) {
-                previewImg.src = `/examples/source_${pipelineName}.png`;
-                previewImg.alt = `${pipelineName} preview`;
-                previewImg.style.display = 'block';
+            // Find the step element and update its content
+            const stepElement = document.querySelector(`[data-step-id="${stepId}"]`);
+            if (stepElement) {
+                // Update the header text
+                const selectedPipeline = this.pipelines.find(p => p.name === pipelineName);
+                const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
+                
+                const headerText = stepElement.querySelector('.min-w-0 strong');
+                const headerDesc = stepElement.querySelector('.min-w-0 span');
+                if (headerText) headerText.textContent = pipelineName;
+                if (headerDesc) headerDesc.textContent = pipelineDescription;
+                
+                // Update the preview image
+                const previewImg = stepElement.querySelector(`#preview-${stepId}`);
+                if (previewImg) {
+                    previewImg.src = `/examples/source_${pipelineName}.png`;
+                    previewImg.alt = `${pipelineName} preview`;
+                    previewImg.style.display = 'block';
+                }
+                
+                // Update the preview label
+                const previewLabel = stepElement.querySelector('.text-center:last-child .text-xs');
+                if (previewLabel) {
+                    previewLabel.textContent = pipelineName;
+                }
             }
         }
     }
