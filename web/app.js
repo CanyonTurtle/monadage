@@ -73,6 +73,9 @@ class PipelineEditor {
                 { name: 'glitch_art', description: 'Digital glitch art' }
             ];
         }
+        
+        // Enable the add step button now that pipelines are loaded
+        this.addStepBtn.disabled = false;
     }
 
     loadStateFromURL() {
@@ -233,10 +236,16 @@ class PipelineEditor {
     }
 
     addPipelineStep(pipelineName = null) {
+        // Don't add steps if pipelines haven't loaded yet
+        if (this.pipelines.length === 0) {
+            console.warn('Pipelines not loaded yet, cannot add step');
+            return;
+        }
+        
         const stepId = ++this.stepCounter;
         const step = {
             id: stepId,
-            pipeline: pipelineName || (this.pipelines.length > 0 ? this.pipelines[0].name : 'cool_variations')
+            pipeline: pipelineName || this.pipelines[0].name
         };
         
         this.pipeline.push(step);
@@ -246,6 +255,12 @@ class PipelineEditor {
     }
 
     renderPipelineStep(step) {
+        // Don't render if pipelines haven't loaded yet
+        if (this.pipelines.length === 0) {
+            console.warn('Pipelines not loaded yet, cannot render step');
+            return;
+        }
+        
         const stepElement = document.createElement('div');
         stepElement.className = 'bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl mb-4 cursor-move transition-all duration-300 hover:-translate-y-1 hover:shadow-lg';
         stepElement.draggable = true;
