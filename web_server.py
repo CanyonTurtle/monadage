@@ -62,6 +62,16 @@ def create_web_app():
         web_dir = current_dir / 'web'
         return send_from_directory(web_dir, 'app.js')
 
+    @app.route('/examples/<filename>')
+    def serve_example(filename):
+        """Serve example images"""
+        try:
+            filename = secure_filename(filename)
+            examples_dir = current_dir / 'web' / 'examples' / 'output'
+            return send_from_directory(examples_dir, filename)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 404
+
     @app.route('/api/pipelines', methods=['GET'])
     def get_pipelines():
         """Get list of available pipelines"""
