@@ -4,381 +4,74 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monadage - Visual Pipeline Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            padding: 30px;
-        }
-
-        .section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-        }
-
-        .upload-area:hover, .upload-area.dragover {
-            border-color: #764ba2;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .upload-area .icon {
-            font-size: 3em;
-            color: #667eea;
-            margin-bottom: 15px;
-        }
-
-        .upload-area p {
-            color: #666;
-            font-size: 1.1em;
-        }
-
-        #file-input {
-            display: none;
-        }
-
-        .file-list {
-            margin-top: 15px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-
-        .file-item .name {
-            font-weight: 500;
-            color: #333;
-        }
-
-        .file-item .remove {
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .pipeline-builder {
-            min-height: 400px;
-        }
-
-        .pipeline-step {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            cursor: move;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .pipeline-step:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-        }
-
-        .pipeline-step.dragging {
-            opacity: 0.5;
-            transform: rotate(5deg);
-        }
-
-        .step-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .step-number {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 15px;
-        }
-
-        .step-controls {
-            display: flex;
-            gap: 10px;
-        }
-
-        .step-remove {
-            background: rgba(220, 53, 69, 0.8);
-            border: none;
-            color: white;
-            border-radius: 5px;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .pipeline-select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 14px;
-        }
-
-        .pipeline-select option {
-            background: #333;
-            color: white;
-        }
-
-        .add-step-btn {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .add-step-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
-        }
-
-        .process-btn {
-            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-            color: white;
-            border: none;
-            padding: 20px 40px;
-            border-radius: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .process-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
-        }
-
-        .process-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            font-weight: 500;
-        }
-
-        .status.processing {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-        }
-
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .results {
-            grid-column: 1 / -1;
-            margin-top: 20px;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .result-item {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .result-item img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-
-        .result-item .info {
-            padding: 15px;
-        }
-
-        .result-item .name {
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .result-item .download {
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            display: inline-block;
-            margin-top: 10px;
-            transition: background 0.3s ease;
-        }
-
-        .result-item .download:hover {
-            background: #764ba2;
-        }
-
-        .drag-placeholder {
-            height: 80px;
-            border: 2px dashed #667eea;
-            border-radius: 10px;
-            background: rgba(102, 126, 234, 0.1);
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #667eea;
-            font-weight: 500;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 2em;
-            }
+        html, body {
+            height: 100%;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎨 Monadage</h1>
-            <p>Visual Pipeline Editor for Creative Image Processing</p>
+<body class="bg-gradient-to-br from-blue-500 to-purple-600 min-h-screen">
+    <div class="container mx-auto px-4 py-4 md:py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl mb-6 md:mb-8 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 md:p-8 text-center">
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">🎨 Monadage</h1>
+                <p class="text-lg md:text-xl opacity-90">Visual Pipeline Editor for Creative Image Processing</p>
+            </div>
         </div>
 
-        <div class="main-content">
-            <div class="section">
-                <h2>📁 Input Files</h2>
-                <div class="upload-area" id="upload-area">
-                    <div class="icon">📷</div>
-                    <p>Drag & drop images here or click to browse</p>
-                    <input type="file" id="file-input" multiple accept="image/*">
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            <!-- Input Files Section -->
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-500 pb-3">
+                    📁 Input Files
+                </h2>
+                
+                <div class="border-3 border-dashed border-blue-500 rounded-xl p-8 md:p-12 text-center cursor-pointer transition-all duration-300 hover:border-purple-600 hover:bg-blue-50 mb-6" 
+                     id="upload-area">
+                    <div class="text-4xl md:text-5xl text-blue-500 mb-4">📷</div>
+                    <p class="text-gray-600 text-sm md:text-base">Drag & drop images here or click to browse</p>
+                    <input type="file" id="file-input" multiple accept="image/*" class="hidden">
                 </div>
-                <div class="file-list" id="file-list"></div>
+                
+                <div id="file-list" class="space-y-2"></div>
             </div>
 
-            <div class="section">
-                <h2>🔧 Pipeline Builder</h2>
-                <button class="add-step-btn" id="add-step">+ Add Processing Step</button>
-                <div class="pipeline-builder" id="pipeline-builder">
-                    <p style="color: #666; text-align: center; margin-top: 50px;">
+            <!-- Pipeline Builder Section -->
+            <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8">
+                <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-500 pb-3">
+                    🔧 Pipeline Builder
+                </h2>
+                
+                <button class="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-semibold py-3 md:py-4 px-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg mb-6"
+                        id="add-step">
+                    + Add Processing Step
+                </button>
+                
+                <div class="min-h-[300px] md:min-h-[400px] mb-6" id="pipeline-builder">
+                    <p class="text-gray-500 text-center mt-12 md:mt-16">
                         No processing steps added yet.<br>
                         Click "Add Processing Step" to start building your pipeline.
                     </p>
                 </div>
-                <button class="process-btn" id="process-btn" disabled>🚀 Process Images</button>
-                <div class="status" id="status" style="display: none;"></div>
+                
+                <button class="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white font-bold py-4 md:py-5 px-6 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                        id="process-btn" disabled>
+                    🚀 Process Images
+                </button>
+                
+                <div class="mt-6 p-4 rounded-xl text-center font-medium hidden" id="status"></div>
             </div>
         </div>
 
-        <div class="section results" id="results" style="display: none;">
-            <h2>✨ Results</h2>
-            <div class="result-grid" id="result-grid"></div>
+        <!-- Results Section -->
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 md:p-8 mt-6 md:mt-8 hidden" id="results">
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-6 border-b-2 border-blue-500 pb-3">
+                ✨ Results
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6" id="result-grid"></div>
         </div>
     </div>
 

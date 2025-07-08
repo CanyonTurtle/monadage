@@ -7,7 +7,9 @@ class PipelineEditor {
         
         this.initializeElements();
         this.setupEventListeners();
-        this.loadAvailablePipelines();
+        this.loadAvailablePipelines().then(() => {
+            this.loadStateFromURL();
+        });
     }
 
     initializeElements() {
@@ -32,6 +34,9 @@ class PipelineEditor {
         // Pipeline builder handlers
         this.addStepBtn.addEventListener('click', this.addPipelineStep.bind(this));
         this.processBtn.addEventListener('click', this.processImages.bind(this));
+
+        // URL state management
+        window.addEventListener('popstate', this.loadStateFromURL.bind(this));
 
         // Make pipeline builder sortable
         this.setupSortable();
@@ -64,14 +69,45 @@ class PipelineEditor {
         }
     }
 
+    loadStateFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const stepsParam = urlParams.get('steps');
+        
+        if (stepsParam) {
+            const steps = stepsParam.split(',').filter(step => step.trim());
+            this.pipeline = [];
+            this.stepCounter = 0;
+            
+            steps.forEach(stepName => {
+                const pipeline = this.pipelines.find(p => p.name === stepName.trim());
+                if (pipeline) {
+                    this.addPipelineStep(stepName.trim());
+                }
+            });
+        }
+    }
+
+    saveStateToURL() {
+        const steps = this.pipeline.map(step => step.pipeline).join(',');
+        const url = new URL(window.location);
+        
+        if (steps) {
+            url.searchParams.set('steps', steps);
+        } else {
+            url.searchParams.delete('steps');
+        }
+        
+        window.history.replaceState({}, '', url);
+    }
+
     handleDragOver(e) {
         e.preventDefault();
-        this.uploadArea.classList.add('dragover');
+        this.uploadArea.classList.add('border-purple-600', 'bg-blue-50');
     }
 
     handleDrop(e) {
         e.preventDefault();
-        this.uploadArea.classList.remove('dragover');
+        this.uploadArea.classList.remove('border-purple-600', 'bg-blue-50');
         const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
         this.addFiles(files);
     }
@@ -101,30 +137,32 @@ class PipelineEditor {
         this.fileList.innerHTML = '';
         this.files.forEach((file, index) => {
             const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
+            fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
             fileItem.innerHTML = `
-                <span class="name">${file.name}</span>
-                <button class="remove" onclick="pipelineEditor.removeFile(${index})">×</button>
+                <span class="font-medium text-gray-700 truncate flex-1 mr-3">${file.name}</span>
+                <button class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors flex-shrink-0" 
+                        onclick="pipelineEditor.removeFile(${index})">×</button>
             `;
             this.fileList.appendChild(fileItem);
         });
     }
 
-    addPipelineStep() {
+    addPipelineStep(pipelineName = null) {
         const stepId = ++this.stepCounter;
         const step = {
             id: stepId,
-            pipeline: this.pipelines[0].name
+            pipeline: pipelineName || (this.pipelines.length > 0 ? this.pipelines[0].name : 'cool_variations')
         };
         
         this.pipeline.push(step);
         this.renderPipelineStep(step);
         this.updateProcessButton();
+        this.saveStateToURL();
     }
 
     renderPipelineStep(step) {
         const stepElement = document.createElement('div');
-        stepElement.className = 'pipeline-step';
+        stepElement.className = 'bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-xl mb-4 cursor-move transition-all duration-300 hover:-translate-y-1 hover:shadow-lg';
         stepElement.draggable = true;
         stepElement.dataset.stepId = step.id;
         
@@ -133,19 +171,22 @@ class PipelineEditor {
             this.pipelineBuilder.innerHTML = '';
         }
 
+        const stepIndex = this.pipeline.findIndex(s => s.id === step.id);
         stepElement.innerHTML = `
-            <div class="step-header">
-                <div style="display: flex; align-items: center;">
-                    <div class="step-number">${this.pipeline.indexOf(step) + 1}</div>
-                    <strong>Processing Step</strong>
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center">
+                    <div class="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3">
+                        ${stepIndex + 1}
+                    </div>
+                    <strong class="text-sm md:text-base">Processing Step</strong>
                 </div>
-                <div class="step-controls">
-                    <button class="step-remove" onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
-                </div>
+                <button class="bg-red-500/80 hover:bg-red-600/80 px-3 py-1 rounded-md text-sm transition-colors" 
+                        onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
             </div>
-            <select class="pipeline-select" onchange="pipelineEditor.updateStepPipeline(${step.id}, this.value)">
+            <select class="w-full p-3 border-2 border-white/30 rounded-lg bg-white/10 text-white text-sm backdrop-blur-sm" 
+                    onchange="pipelineEditor.updateStepPipeline(${step.id}, this.value)">
                 ${this.pipelines.map(p => 
-                    `<option value="${p.name}" ${p.name === step.pipeline ? 'selected' : ''}>${p.name} - ${p.description}</option>`
+                    `<option value="${p.name}" ${p.name === step.pipeline ? 'selected' : ''} class="bg-gray-800 text-white">${p.name} - ${p.description}</option>`
                 ).join('')}
             </select>
         `;
@@ -161,12 +202,14 @@ class PipelineEditor {
         this.pipeline = this.pipeline.filter(step => step.id !== stepId);
         this.renderPipeline();
         this.updateProcessButton();
+        this.saveStateToURL();
     }
 
     updateStepPipeline(stepId, pipelineName) {
         const step = this.pipeline.find(s => s.id === stepId);
         if (step) {
             step.pipeline = pipelineName;
+            this.saveStateToURL();
         }
     }
 
@@ -174,7 +217,7 @@ class PipelineEditor {
         this.pipelineBuilder.innerHTML = '';
         if (this.pipeline.length === 0) {
             this.pipelineBuilder.innerHTML = `
-                <p style="color: #666; text-align: center; margin-top: 50px;">
+                <p class="text-gray-500 text-center mt-12 md:mt-16">
                     No processing steps added yet.<br>
                     Click "Add Processing Step" to start building your pipeline.
                 </p>
@@ -200,7 +243,7 @@ class PipelineEditor {
 
     handleDragStart(e) {
         e.dataTransfer.effectAllowed = 'move';
-        e.target.classList.add('dragging');
+        e.target.classList.add('opacity-50', 'rotate-2');
         e.dataTransfer.setData('text/html', e.target.outerHTML);
         
         // Store reference for reordering
@@ -210,12 +253,12 @@ class PipelineEditor {
     }
 
     handleDragEnd(e) {
-        e.target.classList.remove('dragging');
+        e.target.classList.remove('opacity-50', 'rotate-2');
         this.reorderPipeline();
     }
 
     getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.pipeline-step:not(.dragging)')];
+        const draggableElements = [...container.querySelectorAll('[draggable="true"]:not(.opacity-50)')];
         
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
@@ -230,7 +273,7 @@ class PipelineEditor {
     }
 
     reorderPipeline() {
-        const stepElements = [...this.pipelineBuilder.querySelectorAll('.pipeline-step')];
+        const stepElements = [...this.pipelineBuilder.querySelectorAll('[data-step-id]')];
         const newOrder = stepElements.map(el => {
             const stepId = parseInt(el.dataset.stepId);
             return this.pipeline.find(s => s.id === stepId);
@@ -238,6 +281,7 @@ class PipelineEditor {
         
         this.pipeline = newOrder;
         this.renderPipeline();
+        this.saveStateToURL();
     }
 
     updateProcessButton() {
@@ -300,43 +344,37 @@ class PipelineEditor {
         }
     }
 
-    async simulateProcessing(pipelineString) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // For demo purposes, we'll create some mock results
-        this.mockResults = this.files.map((file, index) => ({
-            originalName: file.name,
-            processedName: `${file.name.split('.')[0]}_${pipelineString.replace(/,/g, '_')}.png`,
-            url: URL.createObjectURL(file), // Using original for demo
-            pipeline: pipelineString
-        }));
-    }
-
     showStatus(type, message) {
-        this.status.style.display = 'block';
-        this.status.className = `status ${type}`;
+        this.status.classList.remove('hidden');
+        this.status.className = `mt-6 p-4 rounded-xl text-center font-medium ${
+            type === 'processing' ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' :
+            type === 'success' ? 'bg-green-100 text-green-800 border border-green-300' :
+            'bg-red-100 text-red-800 border border-red-300'
+        }`;
         this.status.textContent = message;
     }
 
     showResults() {
-        this.results.style.display = 'block';
+        this.results.classList.remove('hidden');
         this.resultGrid.innerHTML = '';
         
         this.processedResults.forEach(result => {
             const resultItem = document.createElement('div');
-            resultItem.className = 'result-item';
+            resultItem.className = 'bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow';
             resultItem.innerHTML = `
-                <img src="/api/preview/${encodeURIComponent(result.processed_name)}" alt="${result.processed_name}">
-                <div class="info">
-                    <div class="name">${result.processed_name}</div>
-                    <div style="color: #666; font-size: 0.9em; margin: 5px 0;">
+                <img src="/api/preview/${encodeURIComponent(result.processed_name)}" 
+                     alt="${result.processed_name}" 
+                     class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <div class="font-semibold text-gray-800 mb-2 text-sm truncate">${result.processed_name}</div>
+                    <div class="text-gray-600 text-xs mb-2">
                         Pipeline: ${result.pipeline}
                     </div>
-                    <div style="color: #999; font-size: 0.8em; margin: 5px 0;">
+                    <div class="text-gray-500 text-xs mb-3">
                         Size: ${(result.size / 1024).toFixed(1)} KB
                     </div>
-                    <a href="/api/download/${encodeURIComponent(result.processed_name)}" class="download">
+                    <a href="/api/download/${encodeURIComponent(result.processed_name)}" 
+                       class="inline-block bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg transition-colors">
                         📥 Download
                     </a>
                 </div>
