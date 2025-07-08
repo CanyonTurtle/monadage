@@ -364,15 +364,21 @@ class PipelineEditor {
     }
 
     setupSortable() {
-        let draggedElement = null;
-
         this.pipelineBuilder.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            const afterElement = this.getDragAfterElement(this.pipelineBuilder, e.clientY);
-            if (afterElement == null) {
-                this.pipelineBuilder.appendChild(draggedElement);
-            } else {
-                this.pipelineBuilder.insertBefore(draggedElement, afterElement);
+            // Only handle if we're dragging a pipeline step (not files)
+            if (e.dataTransfer.types.includes('text/html')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const draggingElement = this.pipelineBuilder.querySelector('.opacity-50');
+                if (draggingElement) {
+                    const afterElement = this.getDragAfterElement(this.pipelineBuilder, e.clientY);
+                    if (afterElement == null) {
+                        this.pipelineBuilder.appendChild(draggingElement);
+                    } else {
+                        this.pipelineBuilder.insertBefore(draggingElement, afterElement);
+                    }
+                }
             }
         });
     }
