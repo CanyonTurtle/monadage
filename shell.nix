@@ -35,8 +35,8 @@ pkgs.mkShell {
     echo "  python main.py --list-pipelines"
     echo ""
     echo "Web Interface:"
-    echo "  cd web && python server.py"
-    echo "  Then open: http://localhost:5000"
+    echo "  python main.py --web"
+    echo "  python main.py --web --port 8080 --no-browser"
     echo ""
   '';
 }
