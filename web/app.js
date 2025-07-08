@@ -88,9 +88,15 @@ class PipelineEditor {
             this.stepCounter = 0;
             
             steps.forEach(stepName => {
-                const pipeline = this.pipelines.find(p => p.name === stepName.trim());
+                const trimmedName = stepName.trim();
+                // Check if this is a valid pipeline name
+                const pipeline = this.pipelines.find(p => p.name === trimmedName);
                 if (pipeline) {
-                    this.addPipelineStep(stepName.trim());
+                    this.addPipelineStep(trimmedName);
+                } else {
+                    // If pipeline doesn't exist, still add it but it will use the first available pipeline
+                    console.warn(`Pipeline '${trimmedName}' not found, using default`);
+                    this.addPipelineStep();
                 }
             });
         }
@@ -275,6 +281,9 @@ class PipelineEditor {
         const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
         const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
         
+        // Ensure we have a valid pipeline name to display
+        const displayPipelineName = selectedPipeline ? selectedPipeline.name : (this.pipelines[0] ? this.pipelines[0].name : 'Unknown');
+        
         stepElement.innerHTML = `
             <div class="flex justify-between items-center mb-3">
                 <div class="flex items-center min-w-0 flex-1">
@@ -282,7 +291,7 @@ class PipelineEditor {
                         ${stepIndex + 1}
                     </div>
                     <div class="min-w-0 flex-1">
-                        <strong class="text-sm md:text-base block truncate">${step.pipeline}</strong>
+                        <strong class="text-sm md:text-base block truncate">${displayPipelineName}</strong>
                         <span class="text-xs opacity-75 block truncate">${pipelineDescription}</span>
                     </div>
                 </div>
@@ -306,11 +315,11 @@ class PipelineEditor {
                 </div>
                 <div class="text-white/60 text-lg md:text-xl">→</div>
                 <div class="text-center">
-                    <img id="preview-${step.id}" src="/examples/source_${step.pipeline}.png" 
-                         alt="${step.pipeline} preview" 
+                    <img id="preview-${step.id}" src="/examples/source_${displayPipelineName}.png" 
+                         alt="${displayPipelineName} preview" 
                          class="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border-2 border-white/30 mb-1"
                          onerror="this.style.display='none'">
-                    <div class="text-xs opacity-75 truncate max-w-[4rem] md:max-w-[5rem]">${step.pipeline}</div>
+                    <div class="text-xs opacity-75 truncate max-w-[4rem] md:max-w-[5rem]">${displayPipelineName}</div>
                 </div>
             </div>
         `;
