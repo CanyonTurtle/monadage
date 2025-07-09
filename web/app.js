@@ -354,7 +354,7 @@ class PipelineEditor {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                     <p>No effects added yet.</p>
-                    <p class="text-sm">Click "Add another effect" to start transforming your photos.</p>
+                    <p class="text-sm">Click "Add an effect" to start transforming your photos.</p>
                 </div>
             `;
         } else {
@@ -458,9 +458,21 @@ class PipelineEditor {
         if (hasEffects) {
             // Secondary styling when there are already effects
             this.addStepBtn.className = 'w-full bg-gray-100 text-gray-700 border border-gray-300 font-medium py-3 md:py-4 px-6 rounded-lg transition-all duration-300 hover:bg-gray-200 mb-6 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300';
+            this.addStepBtn.innerHTML = `
+                <svg class="inline w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add another effect
+            `;
         } else {
             // Primary styling when there are no effects (current blue color)
             this.addStepBtn.className = 'w-full bg-blue-600 text-white font-medium py-3 md:py-4 px-6 rounded-lg transition-all duration-300 hover:bg-blue-700 mb-6 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300';
+            this.addStepBtn.innerHTML = `
+                <svg class="inline w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                Add an effect
+            `;
         }
     }
 
