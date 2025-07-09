@@ -1,21 +1,40 @@
 from typing import Dict, Type, List, Union
 from pathlib import Path
-from .base import Pipeline
-from .cool_variations import CoolVariationsPipeline
-from .four_corners import FourCornersPipeline
-from .mosaic import MosaicPipeline
-from .dynamic_mosaic import DynamicMosaicPipeline
-from .glitch_art import GlitchArtPipeline
-from .ascii_art import AsciiArtPipeline
-from .vaporwave import VaporwavePipeline
-from .kaleidoscope import KaleidoscopePipeline
-from .pixel_sort import PixelSortPipeline
-from .oil_painting import OilPaintingPipeline
-from .neon_edge import NeonEdgePipeline
-from .datamosh import DatamoshPipeline
-from .fractal_spiral import FractalSpiralPipeline
-from .comic_book import ComicBookPipeline
-from .geometric_telescope import GeometricTelescopePipeline
+try:
+    from .base import Pipeline
+    from .cool_variations import CoolVariationsPipeline
+    from .four_corners import FourCornersPipeline
+    from .mosaic import MosaicPipeline
+    from .dynamic_mosaic import DynamicMosaicPipeline
+    from .glitch_art import GlitchArtPipeline
+    from .ascii_art import AsciiArtPipeline
+    from .vaporwave import VaporwavePipeline
+    from .kaleidoscope import KaleidoscopePipeline
+    from .pixel_sort import PixelSortPipeline
+    from .oil_painting import OilPaintingPipeline
+    from .neon_edge import NeonEdgePipeline
+    from .datamosh import DatamoshPipeline
+    from .fractal_spiral import FractalSpiralPipeline
+    from .comic_book import ComicBookPipeline
+    from .geometric_telescope import GeometricTelescopePipeline
+except ImportError:
+    # For WSGI deployment, try absolute imports
+    from pipelines.base import Pipeline
+    from pipelines.cool_variations import CoolVariationsPipeline
+    from pipelines.four_corners import FourCornersPipeline
+    from pipelines.mosaic import MosaicPipeline
+    from pipelines.dynamic_mosaic import DynamicMosaicPipeline
+    from pipelines.glitch_art import GlitchArtPipeline
+    from pipelines.ascii_art import AsciiArtPipeline
+    from pipelines.vaporwave import VaporwavePipeline
+    from pipelines.kaleidoscope import KaleidoscopePipeline
+    from pipelines.pixel_sort import PixelSortPipeline
+    from pipelines.oil_painting import OilPaintingPipeline
+    from pipelines.neon_edge import NeonEdgePipeline
+    from pipelines.datamosh import DatamoshPipeline
+    from pipelines.fractal_spiral import FractalSpiralPipeline
+    from pipelines.comic_book import ComicBookPipeline
+    from pipelines.geometric_telescope import GeometricTelescopePipeline
 
 
 # Registry of available pipelines

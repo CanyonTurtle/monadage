@@ -15,6 +15,11 @@ from werkzeug.utils import secure_filename
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
+# Add parent directory to path so 'monadage' imports work
+parent_dir = current_dir.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+
 def create_web_app():
     """Create and configure the Flask web application"""
     try:
@@ -22,17 +27,28 @@ def create_web_app():
         from pipelines.registry import get_pipeline, list_pipelines
     except ImportError:
         try:
-            # Try with adjusted path
+            # Add pipelines directory to Python path
+            pipelines_dir = current_dir / "pipelines"
+            if str(pipelines_dir) not in sys.path:
+                sys.path.insert(0, str(pipelines_dir))
+            
+            # Import using absolute path
             import importlib.util
-            registry_path = current_dir / "pipelines" / "registry.py"
-            spec = importlib.util.spec_from_file_location("registry", registry_path)
+            registry_path = pipelines_dir / "registry.py"
+            spec = importlib.util.spec_from_file_location("pipelines.registry", registry_path)
             registry_module = importlib.util.module_from_spec(spec)
+            
+            # Execute module in context
+            sys.modules["pipelines.registry"] = registry_module
             spec.loader.exec_module(registry_module)
+            
             get_pipeline = registry_module.get_pipeline
             list_pipelines = registry_module.list_pipelines
         except Exception as e:
             print(f"Error: Could not import pipeline registry: {e}")
             print("Make sure you're running from the monadage directory.")
+            print(f"Current directory: {current_dir}")
+            print(f"Registry path: {current_dir / 'pipelines' / 'registry.py'}")
             sys.exit(1)
 
     app = Flask(__name__)
