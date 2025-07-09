@@ -160,3 +160,13 @@ cython_debug/
 #.idea/
 
 images
+
+# Production deployment files
+production.env
+nginx.conf
+pids/
+logs/
+
+# Temporary directories
+temp_uploads/
+temp_outputs/
