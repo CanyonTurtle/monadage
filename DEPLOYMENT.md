@@ -144,7 +144,16 @@ curl -k https://your-domain.com/
 
 ## Development vs Production
 
-- **Development**: `nix develop` then `python main.py --web`
+- **Development**: `nix develop --command gunicorn -w 1 -b 127.0.0.1:5000 --reload wsgi:app`
+- **Legacy Development**: `nix develop` then `python main.py --web`
 - **Production**: `nix develop --command ./deploy.sh`
 
 The same nix environment ensures consistency between development and production.
+
+### Why Use Gunicorn for Development?
+
+Using gunicorn in development mode (`--reload`) provides:
+- **Same WSGI setup** as production
+- **Hot reloading** on code changes
+- **Better performance** than Flask's dev server
+- **Consistent behavior** with production deployment
