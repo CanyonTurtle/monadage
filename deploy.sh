@@ -54,32 +54,23 @@ cleanup_processes() {
     sleep 2
 }
 
+# Function to create self-signed certificate for initial setup
+create_self_signed_cert() {
+    echo "Creating temporary self-signed certificate..."
+    openssl req -x509 -nodes -days 1 -newkey rsa:2048 \
+        -keyout "$SSL_DIR/privkey.pem" \
+        -out "$SSL_DIR/fullchain.pem" \
+        -subj "/C=US/ST=State/L=City/O=Org/CN=$DOMAIN_NAME" \
+        2>/dev/null
+}
+
 # Function to generate SSL certificate
 setup_ssl() {
     echo -e "${YELLOW}Setting up SSL certificate...${NC}"
     
-    # Check if certificate already exists
-    if [ ! -f "$SSL_DIR/fullchain.pem" ]; then
-        echo "Generating new SSL certificate for $DOMAIN_NAME..."
-        
-        # Get certificate with custom config and work directories
-        certbot certonly \
-            --webroot \
-            --webroot-path="$CERTBOT_DIR" \
-            --email "$SSL_EMAIL" \
-            --agree-tos \
-            --no-eff-email \
-            --domains "$DOMAIN_NAME" \
-            --non-interactive \
-            --config-dir "$PROJECT_DIR/letsencrypt" \
-            --work-dir "$PROJECT_DIR/letsencrypt-work" \
-            --logs-dir "$LOG_DIR"
-        
-        # Copy certificates to our SSL directory
-        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" "$SSL_DIR/"
-        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/privkey.pem" "$SSL_DIR/"
-    else
-        echo "SSL certificate already exists. Renewing if needed..."
+    # Check if real certificate already exists
+    if [ -f "$SSL_DIR/fullchain.pem" ] && openssl x509 -in "$SSL_DIR/fullchain.pem" -text -noout | grep -q "Let's Encrypt"; then
+        echo "Let's Encrypt certificate already exists. Renewing if needed..."
         certbot renew \
             --config-dir "$PROJECT_DIR/letsencrypt" \
             --work-dir "$PROJECT_DIR/letsencrypt-work" \
@@ -89,6 +80,43 @@ setup_ssl() {
         # Update our SSL directory
         cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" "$SSL_DIR/" 2>/dev/null || true
         cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/privkey.pem" "$SSL_DIR/" 2>/dev/null || true
+    else
+        echo "No valid Let's Encrypt certificate found. Will obtain after nginx starts."
+        create_self_signed_cert
+    fi
+}
+
+# Function to obtain real SSL certificate
+obtain_real_ssl() {
+    echo -e "${YELLOW}Obtaining real SSL certificate...${NC}"
+    
+    # Get certificate with custom config and work directories
+    if certbot certonly \
+        --webroot \
+        --webroot-path="$CERTBOT_DIR" \
+        --email "$SSL_EMAIL" \
+        --agree-tos \
+        --no-eff-email \
+        --domains "$DOMAIN_NAME" \
+        --non-interactive \
+        --config-dir "$PROJECT_DIR/letsencrypt" \
+        --work-dir "$PROJECT_DIR/letsencrypt-work" \
+        --logs-dir "$LOG_DIR"; then
+        
+        # Copy certificates to our SSL directory
+        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" "$SSL_DIR/"
+        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/privkey.pem" "$SSL_DIR/"
+        
+        echo "✓ Real SSL certificate obtained successfully"
+        
+        # Reload nginx with new certificate
+        if [ -f "$PID_DIR/nginx.pid" ]; then
+            nginx -s reload -c "$NGINX_CONF" -p "$PROJECT_DIR"
+            echo "✓ Nginx reloaded with new SSL certificate"
+        fi
+    else
+        echo -e "${RED}Failed to obtain SSL certificate. Continuing with self-signed certificate.${NC}"
+        echo "Check DNS settings and ensure $DOMAIN_NAME points to this server."
     fi
 }
 
@@ -161,9 +189,16 @@ verify_deployment() {
 # Main deployment flow
 main() {
     cleanup_processes
-    setup_ssl
+    setup_ssl  # Creates self-signed cert if needed
     generate_nginx_config
     start_services
+    
+    # Now that nginx is running, try to get real SSL certificate
+    if [ ! -f "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+        sleep 2  # Give nginx a moment to start
+        obtain_real_ssl
+    fi
+    
     verify_deployment
     
     echo -e "${GREEN}🎉 Deployment completed successfully!${NC}"
