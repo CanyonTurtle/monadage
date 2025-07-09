@@ -81,6 +81,7 @@ class PipelineEditor {
         
         // Enable the add step button now that pipelines are loaded
         this.addStepBtn.disabled = false;
+        this.updateAddButton();
         console.log('Pipeline loading complete. Add step button enabled.');
     }
 
@@ -105,6 +106,7 @@ class PipelineEditor {
                     this.addPipelineStep();
                 }
             });
+            this.updateAddButton();
         }
     }
 
@@ -264,6 +266,7 @@ class PipelineEditor {
         this.pipeline.push(step);
         this.renderPipeline();
         this.updateProcessButton();
+        this.updateAddButton();
         this.saveStateToURL();
     }
 
@@ -337,6 +340,7 @@ class PipelineEditor {
         this.pipeline = this.pipeline.filter(step => step.id !== stepId);
         this.renderPipeline();
         this.updateProcessButton();
+        this.updateAddButton();
         this.saveStateToURL();
     }
 
@@ -446,6 +450,18 @@ class PipelineEditor {
         cardSide.addEventListener('dragend', this.handleDragEnd.bind(this));
         
         return stepContainer;
+    }
+
+    updateAddButton() {
+        const hasEffects = this.pipeline.length > 0;
+        
+        if (hasEffects) {
+            // Secondary styling when there are already effects
+            this.addStepBtn.className = 'w-full bg-gray-100 text-gray-700 border border-gray-300 font-medium py-3 md:py-4 px-6 rounded-lg transition-all duration-300 hover:bg-gray-200 mb-6 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300';
+        } else {
+            // Primary styling when there are no effects (current blue color)
+            this.addStepBtn.className = 'w-full bg-blue-600 text-white font-medium py-3 md:py-4 px-6 rounded-lg transition-all duration-300 hover:bg-blue-700 mb-6 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300';
+        }
     }
 
     updateProcessButton() {
