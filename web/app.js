@@ -383,8 +383,8 @@ class PipelineEditor {
         
         cardSide.innerHTML = `
             <div class="flex h-32 overflow-hidden rounded-lg">
-                <!-- Left half: Full-height image -->
-                <div class="w-1/2 relative">
+                <!-- Left side: Square image -->
+                <div class="w-32 h-32 relative flex-shrink-0">
                     <img src="/examples/source_${displayPipelineName}.png" 
                          alt="${displayPipelineName}" 
                          class="w-full h-full object-cover"
@@ -394,26 +394,26 @@ class PipelineEditor {
                     </div>
                 </div>
                 
-                <!-- Right half: Content -->
-                <div class="w-1/2 p-4 flex flex-col">
-                    <div class="flex items-center gap-3 mb-3">
+                <!-- Right side: Content (takes remaining space) -->
+                <div class="flex-1 p-2 sm:p-4 flex flex-col">
+                    <div class="flex items-center gap-2 mb-2 sm:gap-3 sm:mb-3">
                         <div class="flex-1 relative" id="pipeline-selector-${step.id}">
-                            <button class="w-full p-2 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between font-medium text-gray-900 text-sm" 
+                            <button class="w-full p-1.5 sm:p-2 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between font-medium text-gray-900 text-xs sm:text-sm" 
                                     onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
-                                <span>${this.formatPipelineName(step.pipeline)}</span>
-                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <span class="truncate">${this.formatPipelineName(step.pipeline)}</span>
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
                         </div>
-                        <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0" 
+                        <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center transition-colors flex-shrink-0" 
                                 onclick="pipelineEditor.removeStep(${step.id})" title="Remove step">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </button>
                     </div>
-                    <div class="text-xs text-gray-500 leading-relaxed flex-1">${pipelineDescription}</div>
+                    <div class="text-xs text-gray-500 leading-relaxed flex-1 overflow-hidden">${pipelineDescription}</div>
                 </div>
             </div>
         `;
@@ -421,16 +421,18 @@ class PipelineEditor {
         // Add dropdown outside the card structure
         const dropdownContainer = document.createElement('div');
         dropdownContainer.innerHTML = `
-            <div class="pipeline-dropdown hidden absolute mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto z-50" id="dropdown-${step.id}" style="max-height: 400px; min-width: 400px;">
-                <div class="pipeline-grid">
+            <div class="pipeline-dropdown hidden absolute mt-2 p-2 sm:p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto z-50" id="dropdown-${step.id}" style="max-height: 80vh; width: calc(100vw - 2rem); max-width: 400px;">
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                     ${this.pipelines.map(p => `
-                        <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
+                        <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-2 sm:p-3 text-center hover:shadow-md transition-all"
                              onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
-                            <img src="/examples/source_${p.name}.png" 
-                                 alt="${p.name}" 
-                                 class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
-                                 onerror="this.src='/examples/original.png'">
-                            <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
+                            <div class="aspect-square mb-2">
+                                <img src="/examples/source_${p.name}.png" 
+                                     alt="${p.name}" 
+                                     class="w-full h-full object-cover rounded-md border border-gray-300"
+                                     onerror="this.src='/examples/original.png'">
+                            </div>
+                            <div class="font-medium text-xs sm:text-sm text-gray-900 truncate">${this.formatPipelineName(p.name)}</div>
                         </div>
                     `).join('')}
                 </div>
