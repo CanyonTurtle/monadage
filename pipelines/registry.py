@@ -16,6 +16,11 @@ try:
     from .fractal_spiral import FractalSpiralPipeline
     from .comic_book import ComicBookPipeline
     from .geometric_telescope import GeometricTelescopePipeline
+    from .crystal_refraction import CrystalRefractionPipeline
+    from .liquid_metal import LiquidMetalPipeline
+    from .paper_cutout import PaperCutoutPipeline
+    from .digital_rain import DigitalRainPipeline
+    from .origami_fold import OrigamiFoldPipeline
 except ImportError:
     # For WSGI deployment, try absolute imports
     from pipelines.base import Pipeline
@@ -33,6 +38,11 @@ except ImportError:
     from pipelines.fractal_spiral import FractalSpiralPipeline
     from pipelines.comic_book import ComicBookPipeline
     from pipelines.geometric_telescope import GeometricTelescopePipeline
+    from pipelines.crystal_refraction import CrystalRefractionPipeline
+    from pipelines.liquid_metal import LiquidMetalPipeline
+    from pipelines.paper_cutout import PaperCutoutPipeline
+    from pipelines.digital_rain import DigitalRainPipeline
+    from pipelines.origami_fold import OrigamiFoldPipeline
 
 
 # Registry of available pipelines
@@ -51,6 +61,11 @@ PIPELINES: Dict[str, Type[Pipeline]] = {
     "fractal_spiral": FractalSpiralPipeline,
     "comic_book": ComicBookPipeline,
     "geometric_telescope": GeometricTelescopePipeline,
+    "crystal_refraction": CrystalRefractionPipeline,
+    "liquid_metal": LiquidMetalPipeline,
+    "paper_cutout": PaperCutoutPipeline,
+    "digital_rain": DigitalRainPipeline,
+    "origami_fold": OrigamiFoldPipeline,
 }
 
 

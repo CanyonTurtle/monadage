@@ -717,6 +717,11 @@ class DemoEffectCycler {
             { name: 'pixel_sort', displayName: 'Pixel Sort', borderColor: 'border-green-300' },
             { name: 'kaleidoscope', displayName: 'Kaleidoscope', borderColor: 'border-pink-300' },
             { name: 'comic_book', displayName: 'Comic Book', borderColor: 'border-blue-300' },
+            { name: 'crystal_refraction', displayName: 'Crystal Refraction', borderColor: 'border-emerald-300' },
+            { name: 'liquid_metal', displayName: 'Liquid Metal', borderColor: 'border-slate-300' },
+            { name: 'paper_cutout', displayName: 'Paper Cutout', borderColor: 'border-amber-300' },
+            { name: 'digital_rain', displayName: 'Digital Rain', borderColor: 'border-lime-300' },
+            { name: 'origami_fold', displayName: 'Origami Fold', borderColor: 'border-rose-300' },
         ];
         this.currentIndex = 0;
         this.imageElement = document.getElementById('demo-effect-image');
