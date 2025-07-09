@@ -6,8 +6,10 @@ import json
 import tempfile
 import shutil
 import webbrowser
+import subprocess
+import time
 from pathlib import Path
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_file, send_from_directory, render_template_string
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
@@ -54,6 +56,24 @@ def create_web_app():
     app = Flask(__name__)
     CORS(app)
 
+    # Cache busting - get git hash for versioning
+    def get_git_hash():
+        """Get the current git commit hash for cache busting"""
+        try:
+            result = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'], 
+                                  capture_output=True, text=True, cwd=current_dir)
+            if result.returncode == 0:
+                return result.stdout.strip()
+        except Exception:
+            pass
+        
+        # Fallback to timestamp if git not available
+        import time
+        return str(int(time.time()))
+    
+    # Get version once at startup
+    app.config['CACHE_BUST_VERSION'] = get_git_hash()
+
     # Configuration - use consistent temp directories
     TEMP_BASE = current_dir / 'temp'
     TEMP_BASE.mkdir(exist_ok=True)
@@ -74,15 +94,58 @@ def create_web_app():
 
     @app.route('/')
     def index():
-        """Serve the main application"""
+        """Serve the main application with cache busting"""
         web_dir = current_dir / 'web'
-        return send_from_directory(web_dir, 'index.html')
+        index_path = web_dir / 'index.html'
+        
+        try:
+            with open(index_path, 'r', encoding='utf-8') as f:
+                html_content = f.read()
+            
+            # Replace static file references with cache-busted versions
+            version = app.config['CACHE_BUST_VERSION']
+            html_content = html_content.replace('src="app.js"', f'src="app.js?v={version}"')
+            
+            return html_content
+        except Exception:
+            # Fallback to direct file serving if template processing fails
+            return send_from_directory(web_dir, 'index.html')
 
     @app.route('/app.js')
     def app_js():
-        """Serve the JavaScript application"""
+        """Serve the JavaScript application with cache headers"""
         web_dir = current_dir / 'web'
-        return send_from_directory(web_dir, 'app.js')
+        response = send_from_directory(web_dir, 'app.js')
+        
+        # Add cache headers - cache for 1 hour, but allow revalidation
+        response.headers['Cache-Control'] = 'public, max-age=3600, must-revalidate'
+        response.headers['ETag'] = f'"{app.config["CACHE_BUST_VERSION"]}"'
+        
+        return response
+    
+    @app.route('/static/<path:filename>')
+    def static_files(filename):
+        """Serve static files with cache busting headers"""
+        web_dir = current_dir / 'web'
+        response = send_from_directory(web_dir, filename)
+        
+        # Add cache headers for static assets
+        if filename.endswith(('.js', '.css')):
+            response.headers['Cache-Control'] = 'public, max-age=3600, must-revalidate'
+            response.headers['ETag'] = f'"{app.config["CACHE_BUST_VERSION"]}"'
+        elif filename.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico')):
+            # Images can be cached longer since they change less frequently
+            response.headers['Cache-Control'] = 'public, max-age=86400'
+        
+        return response
+    
+    @app.route('/api/version')
+    def version():
+        """Get current version for debugging"""
+        return jsonify({
+            'version': app.config['CACHE_BUST_VERSION'],
+            'timestamp': int(time.time())
+        })
     
     @app.route('/robots.txt')
     def robots_txt():
