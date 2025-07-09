@@ -309,16 +309,16 @@ class PipelineEditor {
         } else {
             // Create the visual pipeline flow
             const pipelineContainer = document.createElement('div');
-            pipelineContainer.className = 'flex gap-6';
+            pipelineContainer.className = 'flex gap-6 min-h-0';
             
             // Left side: Visual pipeline timeline
             const timelineContainer = document.createElement('div');
-            timelineContainer.className = 'flex-shrink-0 w-32';
+            timelineContainer.className = 'flex-shrink-0 w-32 flex flex-col';
             timelineContainer.innerHTML = this.createPipelineTimeline();
             
             // Right side: Pipeline steps
             const stepsContainer = document.createElement('div');
-            stepsContainer.className = 'flex-1 space-y-4';
+            stepsContainer.className = 'flex-1 flex flex-col gap-4 min-w-0 overflow-hidden';
             
             this.pipeline.forEach(step => {
                 const stepElement = this.createPipelineStepElement(step);
@@ -334,7 +334,7 @@ class PipelineEditor {
     createPipelineTimeline() {
         let timeline = `
             <!-- Original Image -->
-            <div class="flex flex-col items-center mb-4">
+            <div class="flex flex-col items-center mb-6">
                 <img src="/examples/original.png" 
                      alt="Original" 
                      class="w-20 h-20 object-cover rounded-lg border-2 border-gray-300">
@@ -342,21 +342,21 @@ class PipelineEditor {
             </div>
             
             <!-- Funnel Icon -->
-            <div class="flex justify-center mb-4">
+            <div class="flex justify-center mb-6">
                 <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                 </svg>
             </div>
         `;
         
-        // Add pipeline steps with arrows
+        // Add pipeline steps with arrows - each step should align with its card
         this.pipeline.forEach((step, index) => {
             const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
             const displayPipelineName = selectedPipeline ? selectedPipeline.name : 'unknown';
             
             timeline += `
-                <!-- Step ${index + 1} -->
-                <div class="flex flex-col items-center mb-4">
+                <!-- Step ${index + 1} - Height matches card -->
+                <div class="flex flex-col items-center" style="min-height: 160px; justify-content: center;">
                     <img src="/examples/source_${displayPipelineName}.png" 
                          alt="${displayPipelineName}" 
                          class="w-20 h-20 object-cover rounded-lg border-2 border-blue-300"
@@ -368,7 +368,7 @@ class PipelineEditor {
             // Add arrow between steps (but not after the last step)
             if (index < this.pipeline.length - 1) {
                 timeline += `
-                    <div class="flex justify-center mb-4">
+                    <div class="flex justify-center py-2">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
                         </svg>
@@ -382,7 +382,8 @@ class PipelineEditor {
     
     createPipelineStepElement(step) {
         const stepElement = document.createElement('div');
-        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-move';
+        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-move flex-shrink-0 min-w-0 overflow-hidden';
+        stepElement.style.minHeight = '160px';
         stepElement.draggable = true;
         stepElement.dataset.stepId = step.id;
         
@@ -419,7 +420,7 @@ class PipelineEditor {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg" id="dropdown-${step.id}">
+                <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto" id="dropdown-${step.id}" style="max-height: 400px;">
                     <div class="pipeline-grid">
                         ${this.pipelines.map(p => `
                             <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
@@ -531,6 +532,8 @@ class PipelineEditor {
         const draggedId = parseInt(event.dataTransfer.getData('text/plain'));
         const targetElement = event.target.closest('[data-step-id]');
         
+        console.log('Drop event:', { draggedId, targetElement, targetId: targetElement?.dataset.stepId });
+        
         // Clear all visual feedback
         const allSteps = this.pipelineBuilder.querySelectorAll('[data-step-id]');
         allSteps.forEach(step => {
@@ -547,14 +550,21 @@ class PipelineEditor {
             const draggedIndex = this.pipeline.findIndex(s => s.id === draggedId);
             const targetIndex = this.pipeline.findIndex(s => s.id === targetId);
             
+            console.log('Reordering:', { draggedIndex, targetIndex, draggedId, targetId });
+            
             if (draggedIndex !== -1 && targetIndex !== -1) {
                 // Reorder the pipeline
                 const [draggedStep] = this.pipeline.splice(draggedIndex, 1);
                 this.pipeline.splice(targetIndex, 0, draggedStep);
                 
+                console.log('Pipeline reordered successfully');
+                
+                // Re-render the entire pipeline to update both timeline and cards
                 this.renderPipeline();
                 this.saveStateToURL();
             }
+        } else {
+            console.log('No valid drop target or same element');
         }
     }
 
