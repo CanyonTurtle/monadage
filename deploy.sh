@@ -138,9 +138,39 @@ generate_nginx_config() {
         "$PROJECT_DIR/nginx.conf.template" > "$NGINX_CONF"
 }
 
+# Function to setup nginx capabilities
+setup_nginx_capabilities() {
+    echo -e "${YELLOW}Setting up nginx capabilities...${NC}"
+    
+    # Find nginx binary path
+    NGINX_PATH=$(which nginx)
+    
+    if [ -z "$NGINX_PATH" ]; then
+        echo -e "${RED}Error: nginx binary not found${NC}"
+        exit 1
+    fi
+    
+    # Check if capability is already set
+    if getcap "$NGINX_PATH" | grep -q "cap_net_bind_service"; then
+        echo "✓ Nginx already has cap_net_bind_service capability"
+    else
+        echo "Setting cap_net_bind_service capability on nginx..."
+        if sudo setcap 'cap_net_bind_service=+ep' "$NGINX_PATH"; then
+            echo "✓ Successfully set nginx capabilities"
+        else
+            echo -e "${RED}Error: Failed to set nginx capabilities. Run manually:${NC}"
+            echo "  sudo setcap 'cap_net_bind_service=+ep' $NGINX_PATH"
+            exit 1
+        fi
+    fi
+}
+
 # Function to start services
 start_services() {
     echo -e "${YELLOW}Starting services...${NC}"
+    
+    # Setup nginx capabilities first
+    setup_nginx_capabilities
     
     # Start gunicorn
     echo "Starting gunicorn..."

@@ -117,8 +117,24 @@ Internet → nginx:443 (SSL) → gunicorn:5000 (Flask app)
 - SSL/TLS encryption with auto-renewal
 - Rate limiting on API endpoints
 - Security headers (HSTS, CSP, etc.)
-- Process isolation (non-root user)
+- Process isolation (non-root user with capabilities)
+- Nginx uses Linux capabilities for privileged ports (no full root access)
 - Secrets managed via environment variables
+
+### Linux Capabilities Approach
+
+Instead of running nginx as root, we use Linux capabilities to grant only the specific permission needed to bind to privileged ports (80, 443):
+
+```bash
+# This is done automatically by the setup script
+sudo setcap 'cap_net_bind_service=+ep' $(which nginx)
+```
+
+This approach provides:
+- ✅ **Principle of least privilege** - nginx gets only the capability it needs
+- ✅ **Security** - no full root access required for the process
+- ✅ **Standard ports** - can serve on ports 80 and 443
+- ✅ **File isolation** - all files remain owned by regular user
 
 ## Troubleshooting
 

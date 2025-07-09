@@ -170,6 +170,26 @@ else
     error "Nix environment test failed"
 fi
 
+# 8.5. Setup nginx capabilities for privileged ports
+log "🔐 Setting up nginx capabilities for privileged ports..."
+NGINX_PATH=$(nix develop --command which nginx 2>/dev/null || echo "")
+if [[ -n "$NGINX_PATH" ]]; then
+    if getcap "$NGINX_PATH" 2>/dev/null | grep -q "cap_net_bind_service"; then
+        success "Nginx already has cap_net_bind_service capability"
+    else
+        log "Setting cap_net_bind_service capability on nginx..."
+        if sudo setcap 'cap_net_bind_service=+ep' "$NGINX_PATH"; then
+            success "Successfully set nginx capabilities"
+        else
+            warning "Failed to set nginx capabilities automatically"
+            warning "You'll need to run this manually before deployment:"
+            warning "  sudo setcap 'cap_net_bind_service=+ep' $NGINX_PATH"
+        fi
+    fi
+else
+    warning "Could not find nginx binary. Capabilities will be set during deployment."
+fi
+
 # 9. Create necessary directories
 directories=(
     "logs" "pids" "certbot" "ssl" "letsencrypt" "letsencrypt-work"
