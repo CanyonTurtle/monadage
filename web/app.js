@@ -721,10 +721,21 @@ class DemoEffectCycler {
         this.currentIndex = 0;
         this.imageElement = document.getElementById('demo-effect-image');
         this.nameElement = document.getElementById('demo-effect-name');
+        this.preloadedImages = new Map();
         
         if (this.imageElement && this.nameElement) {
+            this.preloadAllImages();
             this.startCycling();
         }
+    }
+    
+    preloadAllImages() {
+        // Preload all effect images to prevent flickering
+        this.effects.forEach(effect => {
+            const img = new Image();
+            img.src = `/examples/source_${effect.name}.png`;
+            this.preloadedImages.set(effect.name, img);
+        });
     }
     
     startCycling() {
