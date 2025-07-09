@@ -53,8 +53,11 @@ class PipelineEditor {
             const response = await fetch('/api/pipelines');
             const data = await response.json();
             
+            console.log('Pipeline API response:', data);
+            
             if (data.success) {
                 this.pipelines = data.pipelines;
+                console.log('Loaded pipelines:', this.pipelines);
             } else {
                 console.error('Failed to load pipelines:', data.error);
                 // Fallback to hardcoded list
@@ -64,6 +67,7 @@ class PipelineEditor {
                     { name: 'vaporwave', description: 'Retro vaporwave aesthetic' },
                     { name: 'neon_edge', description: 'Neon edge lighting on dark backgrounds' }
                 ];
+                console.log('Using fallback pipelines:', this.pipelines);
             }
         } catch (error) {
             console.error('Error loading pipelines:', error);
@@ -72,10 +76,12 @@ class PipelineEditor {
                 { name: 'cool_variations', description: 'Random cool variations' },
                 { name: 'glitch_art', description: 'Digital glitch art' }
             ];
+            console.log('Using error fallback pipelines:', this.pipelines);
         }
         
         // Enable the add step button now that pipelines are loaded
         this.addStepBtn.disabled = false;
+        console.log('Pipeline loading complete. Add step button enabled.');
     }
 
     loadStateFromURL() {
@@ -249,9 +255,23 @@ class PipelineEditor {
         }
         
         const stepId = ++this.stepCounter;
+        
+        // Ensure we have a valid pipeline name
+        let selectedPipeline = pipelineName;
+        if (!selectedPipeline) {
+            selectedPipeline = this.pipelines[0].name;
+        }
+        
+        // Validate the pipeline name exists
+        const pipelineExists = this.pipelines.some(p => p.name === selectedPipeline);
+        if (!pipelineExists) {
+            console.warn(`Pipeline '${selectedPipeline}' not found, using first available pipeline`);
+            selectedPipeline = this.pipelines[0].name;
+        }
+        
         const step = {
             id: stepId,
-            pipeline: pipelineName || this.pipelines[0].name
+            pipeline: selectedPipeline
         };
         
         this.pipeline.push(step);
@@ -279,6 +299,12 @@ class PipelineEditor {
 
         const stepIndex = this.pipeline.findIndex(s => s.id === step.id);
         const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
+        
+        if (!selectedPipeline) {
+            console.warn(`Pipeline '${step.pipeline}' not found in available pipelines:`, this.pipelines.map(p => p.name));
+            console.warn('Available pipelines:', this.pipelines);
+        }
+        
         const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
         
         // Ensure we have a valid pipeline name to display
