@@ -47,8 +47,12 @@ class OilPaintingPipeline(Pipeline):
                 for ny in range(neighborhood.shape[0]):
                     for nx in range(neighborhood.shape[1]):
                         pixel = neighborhood[ny, nx]
-                        # Calculate intensity level
-                        intensity = int(np.mean(pixel) / (256 // self.intensity)) * (256 // self.intensity)
+                        # Calculate intensity level - handle both RGB and grayscale
+                        if len(pixel.shape) == 0:  # scalar
+                            pixel_mean = float(pixel)
+                        else:  # array
+                            pixel_mean = float(np.mean(pixel))
+                        intensity = int(pixel_mean / (256 // self.intensity)) * (256 // self.intensity)
                         
                         if intensity not in intensities:
                             intensities[intensity] = []
