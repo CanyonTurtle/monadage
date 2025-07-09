@@ -389,42 +389,38 @@ class PipelineEditor {
         cardSide.dataset.stepId = step.id;
         
         cardSide.innerHTML = `
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center min-w-0 flex-1">
-                    <div class="bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center font-medium text-sm mr-3 flex-shrink-0 text-gray-700">
-                        ${index + 1}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="font-medium text-gray-900 truncate">${this.formatPipelineName(displayPipelineName)}</div>
-                        <div class="text-sm text-gray-500 truncate">${pipelineDescription}</div>
+            <div class="flex items-center gap-3 mb-3">
+                <div class="flex-1" id="pipeline-selector-${step.id}">
+                    <button class="w-full p-3 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between font-medium text-gray-900" 
+                            onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
+                        <span>${this.formatPipelineName(step.pipeline)}</span>
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto" id="dropdown-${step.id}" style="max-height: 400px;">
+                        <div class="pipeline-grid">
+                            ${this.pipelines.map(p => `
+                                <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
+                                     onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
+                                    <img src="/examples/source_${p.name}.png" 
+                                         alt="${p.name}" 
+                                         class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
+                                         onerror="this.src='/examples/original.png'">
+                                    <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
-                <button class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
-                        onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
-            </div>
-            <div class="mb-0" id="pipeline-selector-${step.id}">
-                <button class="w-full p-3 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between" 
-                        onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
-                    <span class="font-medium text-gray-900">${this.formatPipelineName(step.pipeline)}</span>
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors flex-shrink-0" 
+                        onclick="pipelineEditor.removeStep(${step.id})" title="Remove step">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
-                <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto" id="dropdown-${step.id}" style="max-height: 400px;">
-                    <div class="pipeline-grid">
-                        ${this.pipelines.map(p => `
-                            <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
-                                 onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
-                                <img src="/examples/source_${p.name}.png" 
-                                     alt="${p.name}" 
-                                     class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
-                                     onerror="this.src='/examples/original.png'">
-                                <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
             </div>
+            <div class="text-sm text-gray-500 leading-relaxed">${pipelineDescription}</div>
         `;
         
         // Add drag event listeners to the card
