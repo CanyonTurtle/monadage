@@ -83,6 +83,24 @@ def create_web_app():
         """Serve the JavaScript application"""
         web_dir = current_dir / 'web'
         return send_from_directory(web_dir, 'app.js')
+    
+    @app.route('/robots.txt')
+    def robots_txt():
+        """Serve robots.txt for SEO"""
+        web_dir = current_dir / 'web'
+        return send_from_directory(web_dir, 'robots.txt')
+    
+    @app.route('/sitemap.xml')
+    def sitemap_xml():
+        """Serve sitemap.xml for SEO"""
+        web_dir = current_dir / 'web'
+        return send_from_directory(web_dir, 'sitemap.xml')
+    
+    @app.route('/site.webmanifest')
+    def site_webmanifest():
+        """Serve web app manifest"""
+        web_dir = current_dir / 'web'
+        return send_from_directory(web_dir, 'site.webmanifest')
 
     @app.route('/examples/<filename>')
     def serve_example(filename):

@@ -218,10 +218,12 @@ class PipelineEditor {
                 <div class="flex items-center justify-between mb-3">
                     <span class="font-medium text-gray-700 truncate flex-1 mr-3">${file.name}</span>
                     <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors flex-shrink-0" 
-                            onclick="pipelineEditor.removeFile(${index})">×</button>
+                            onclick="pipelineEditor.removeFile(${index})"
+                            aria-label="Remove ${file.name} from upload list"
+                            title="Remove file">×</button>
                 </div>
                 <div class="flex items-center gap-3">
-                    <img src="${previewUrl}" alt="${file.name}" 
+                    <img src="${previewUrl}" alt="Preview of ${file.name}" 
                          class="w-16 h-16 object-cover rounded-lg border border-gray-300 flex-shrink-0">
                     <div class="flex-1 text-sm text-gray-600">
                         <div>Size: ${(file.size / 1024).toFixed(1)} KB</div>
@@ -229,6 +231,8 @@ class PipelineEditor {
                     </div>
                 </div>
             `;
+            fileItem.setAttribute('role', 'listitem');
+            fileItem.setAttribute('aria-label', `Uploaded file: ${file.name}`);
             this.fileList.appendChild(fileItem);
         });
     }
@@ -380,6 +384,8 @@ class PipelineEditor {
         cardSide.className = 'bg-white border border-gray-200 rounded-lg shadow-sm cursor-move min-w-0 relative';
         cardSide.draggable = true;
         cardSide.dataset.stepId = step.id;
+        cardSide.setAttribute('role', 'listitem');
+        cardSide.setAttribute('aria-label', `Effect: ${this.formatPipelineName(step.pipeline)}`);
         
         cardSide.innerHTML = `
             <div class="flex h-32 overflow-hidden rounded-lg">
@@ -421,18 +427,18 @@ class PipelineEditor {
         // Add dropdown outside the card structure
         const dropdownContainer = document.createElement('div');
         dropdownContainer.innerHTML = `
-            <div class="pipeline-dropdown hidden absolute mt-2 p-2 sm:p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto z-50" id="dropdown-${step.id}" style="max-height: 80vh; width: calc(100vw - 2rem); max-width: 400px;">
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div class="pipeline-dropdown hidden absolute mt-2 p-2 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto z-50" id="dropdown-${step.id}" style="max-height: 60vh; width: calc(100vw - 3rem); max-width: 320px;">
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
                     ${this.pipelines.map(p => `
-                        <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-2 sm:p-3 text-center hover:shadow-md transition-all"
+                        <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-md p-1.5 sm:p-2 text-center hover:shadow-md transition-all"
                              onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
-                            <div class="aspect-square mb-2">
+                            <div class="aspect-square mb-1">
                                 <img src="/examples/source_${p.name}.png" 
                                      alt="${p.name}" 
-                                     class="w-full h-full object-cover rounded-md border border-gray-300"
+                                     class="w-full h-full object-cover rounded-sm border border-gray-300"
                                      onerror="this.src='/examples/original.png'">
                             </div>
-                            <div class="font-medium text-xs sm:text-sm text-gray-900 truncate">${this.formatPipelineName(p.name)}</div>
+                            <div class="font-medium text-xs text-gray-900 truncate leading-tight">${this.formatPipelineName(p.name)}</div>
                         </div>
                     `).join('')}
                 </div>
