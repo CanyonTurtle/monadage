@@ -2,7 +2,6 @@ from typing import Dict, Type, List, Union
 from pathlib import Path
 try:
     from .base import Pipeline
-    from .cool_variations import CoolVariationsPipeline
     from .four_corners import FourCornersPipeline
     from .mosaic import MosaicPipeline
     from .dynamic_mosaic import DynamicMosaicPipeline
@@ -20,7 +19,6 @@ try:
 except ImportError:
     # For WSGI deployment, try absolute imports
     from pipelines.base import Pipeline
-    from pipelines.cool_variations import CoolVariationsPipeline
     from pipelines.four_corners import FourCornersPipeline
     from pipelines.mosaic import MosaicPipeline
     from pipelines.dynamic_mosaic import DynamicMosaicPipeline
@@ -39,7 +37,6 @@ except ImportError:
 
 # Registry of available pipelines
 PIPELINES: Dict[str, Type[Pipeline]] = {
-    "cool_variations": CoolVariationsPipeline,
     "four_corners": FourCornersPipeline,
     "mosaic": MosaicPipeline,
     "dynamic_mosaic": DynamicMosaicPipeline,

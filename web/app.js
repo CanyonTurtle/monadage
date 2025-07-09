@@ -62,7 +62,6 @@ class PipelineEditor {
                 console.error('Failed to load pipelines:', data.error);
                 // Fallback to hardcoded list
                 this.pipelines = [
-                    { name: 'cool_variations', description: 'Random cool variations with quantization and effects' },
                     { name: 'glitch_art', description: 'Digital glitch art with corruption effects' },
                     { name: 'vaporwave', description: 'Retro vaporwave aesthetic' },
                     { name: 'neon_edge', description: 'Neon edge lighting on dark backgrounds' }
@@ -73,7 +72,6 @@ class PipelineEditor {
             console.error('Error loading pipelines:', error);
             // Fallback to hardcoded list
             this.pipelines = [
-                { name: 'cool_variations', description: 'Random cool variations' },
                 { name: 'glitch_art', description: 'Digital glitch art' }
             ];
             console.log('Using error fallback pipelines:', this.pipelines);
@@ -719,7 +717,6 @@ class DemoEffectCycler {
             { name: 'pixel_sort', displayName: 'Pixel Sort', borderColor: 'border-green-300' },
             { name: 'kaleidoscope', displayName: 'Kaleidoscope', borderColor: 'border-pink-300' },
             { name: 'comic_book', displayName: 'Comic Book', borderColor: 'border-blue-300' },
-            { name: 'cool_variations', displayName: 'Cool Variations', borderColor: 'border-indigo-300' }
         ];
         this.currentIndex = 0;
         this.imageElement = document.getElementById('demo-effect-image');

@@ -87,7 +87,7 @@ def main():
     
     parser.add_argument("input_folder", nargs='?', help="Input folder containing images")
     parser.add_argument("output_folder", nargs='?', help="Output folder for processed images")
-    parser.add_argument("--pipeline", "-p", help="Pipeline(s) to use (comma-separated for composition, e.g., 'cool_variations,mosaic')")
+    parser.add_argument("--pipeline", "-p", help="Pipeline(s) to use (comma-separated for composition, e.g., 'glitch_art,mosaic')")
     parser.add_argument("--list-pipelines", action="store_true", help="List available pipelines")
     parser.add_argument("--web", action="store_true", help="Launch web interface on http://localhost:5000")
     parser.add_argument("--port", type=int, default=5000, help="Port for web interface (default: 5000)")
