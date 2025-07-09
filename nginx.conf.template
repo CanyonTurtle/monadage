@@ -10,11 +10,19 @@ events {
 }
 
 http {
-    include /etc/nginx/mime.types;
+    # Use our local mime.types file
+    include PROJECT_DIR/mime.types;
     default_type application/octet-stream;
 
     # Logging
     access_log PROJECT_DIR/logs/nginx_access.log;
+
+    # Temporary file paths (avoid /var/lib/nginx)
+    client_body_temp_path PROJECT_DIR/tmp/client_body;
+    proxy_temp_path PROJECT_DIR/tmp/proxy;
+    fastcgi_temp_path PROJECT_DIR/tmp/fastcgi;
+    uwsgi_temp_path PROJECT_DIR/tmp/uwsgi;
+    scgi_temp_path PROJECT_DIR/tmp/scgi;
 
     # Basic settings
     sendfile on;

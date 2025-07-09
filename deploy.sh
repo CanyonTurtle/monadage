@@ -33,7 +33,9 @@ for var in "${required_vars[@]}"; do
 done
 
 # Create necessary directories
-mkdir -p "$PID_DIR" "$LOG_DIR" "$CERTBOT_DIR" "$SSL_DIR"
+mkdir -p "$PID_DIR" "$LOG_DIR" "$CERTBOT_DIR" "$SSL_DIR" \
+         "$PROJECT_DIR/tmp/client_body" "$PROJECT_DIR/tmp/proxy" \
+         "$PROJECT_DIR/tmp/fastcgi" "$PROJECT_DIR/tmp/uwsgi" "$PROJECT_DIR/tmp/scgi"
 
 echo -e "${GREEN}🚀 Starting Monadage deployment...${NC}"
 
@@ -154,7 +156,7 @@ start_services() {
     
     # Start nginx
     echo "Starting nginx..."
-    nginx -c "$NGINX_CONF" -p "$PROJECT_DIR"
+    nginx -c "$NGINX_CONF" -p "$PROJECT_DIR" -e "$LOG_DIR/nginx_startup.log"
 }
 
 # Function to verify deployment
