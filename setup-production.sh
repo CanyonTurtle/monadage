@@ -194,6 +194,7 @@ fi
 directories=(
     "logs" "pids" "certbot" "ssl" "letsencrypt" "letsencrypt-work"
     "tmp/client_body" "tmp/proxy" "tmp/fastcgi" "tmp/uwsgi" "tmp/scgi"
+    "temp/uploads" "temp/outputs"
 )
 for dir in "${directories[@]}"; do
     if [[ ! -d "$dir" ]]; then

@@ -54,13 +54,19 @@ def create_web_app():
     app = Flask(__name__)
     CORS(app)
 
-    # Configuration
-    UPLOAD_FOLDER = tempfile.mkdtemp(prefix='monadage_uploads_')
-    OUTPUT_FOLDER = tempfile.mkdtemp(prefix='monadage_outputs_')
+    # Configuration - use consistent temp directories
+    TEMP_BASE = current_dir / 'temp'
+    TEMP_BASE.mkdir(exist_ok=True)
+    
+    UPLOAD_FOLDER = TEMP_BASE / 'uploads'
+    OUTPUT_FOLDER = TEMP_BASE / 'outputs'
+    UPLOAD_FOLDER.mkdir(exist_ok=True)
+    OUTPUT_FOLDER.mkdir(exist_ok=True)
+    
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'webp'}
 
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
+    app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER)
+    app.config['OUTPUT_FOLDER'] = str(OUTPUT_FOLDER)
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 
     def allowed_file(filename):
@@ -300,8 +306,8 @@ def create_web_app():
     def cleanup_temp_dirs():
         """Clean up temporary directories on exit"""
         try:
-            shutil.rmtree(UPLOAD_FOLDER, ignore_errors=True)
-            shutil.rmtree(OUTPUT_FOLDER, ignore_errors=True)
+            shutil.rmtree(str(UPLOAD_FOLDER), ignore_errors=True)
+            shutil.rmtree(str(OUTPUT_FOLDER), ignore_errors=True)
         except:
             pass
 
