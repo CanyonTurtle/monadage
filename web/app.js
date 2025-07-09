@@ -133,32 +133,44 @@ class PipelineEditor {
     }
 
     handleDocumentDragEnter(event) {
-        event.preventDefault();
-        this.dropOverlay.style.opacity = '1';
-        this.dropOverlay.style.pointerEvents = 'auto';
+        // Only handle file drops, not pipeline step drops
+        if (event.dataTransfer.types.includes('Files')) {
+            event.preventDefault();
+            this.dropOverlay.style.opacity = '1';
+            this.dropOverlay.style.pointerEvents = 'auto';
+        }
     }
 
     handleDocumentDragOver(event) {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'copy';
+        // Only handle file drops, not pipeline step drops
+        if (event.dataTransfer.types.includes('Files')) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
     }
 
     handleDocumentDragLeave(event) {
-        event.preventDefault();
-        if (!event.relatedTarget || !document.contains(event.relatedTarget)) {
-            this.dropOverlay.style.opacity = '0';
-            this.dropOverlay.style.pointerEvents = 'none';
+        // Only handle file drops, not pipeline step drops
+        if (event.dataTransfer.types.includes('Files')) {
+            event.preventDefault();
+            if (!event.relatedTarget || !document.contains(event.relatedTarget)) {
+                this.dropOverlay.style.opacity = '0';
+                this.dropOverlay.style.pointerEvents = 'none';
+            }
         }
     }
 
     handleDocumentDrop(event) {
-        event.preventDefault();
-        this.dropOverlay.style.opacity = '0';
-        this.dropOverlay.style.pointerEvents = 'none';
-        
-        const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-        if (files.length > 0) {
-            this.addFiles(files);
+        // Only handle file drops, not pipeline step drops
+        if (event.dataTransfer.types.includes('Files')) {
+            event.preventDefault();
+            this.dropOverlay.style.opacity = '0';
+            this.dropOverlay.style.pointerEvents = 'none';
+            
+            const files = Array.from(event.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                this.addFiles(files);
+            }
         }
     }
 
@@ -300,109 +312,87 @@ class PipelineEditor {
             this.pipelineBuilder.innerHTML = `
                 <div class="text-gray-500 text-center mt-12 md:mt-16 space-y-2">
                     <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
                     <p>No processing steps added yet.</p>
                     <p class="text-sm">Click "Add processing step" to start building your pipeline.</p>
                 </div>
             `;
         } else {
-            // Create the visual pipeline flow
+            // Create the unified pipeline flow
             const pipelineContainer = document.createElement('div');
-            pipelineContainer.className = 'flex gap-6 min-h-0';
+            pipelineContainer.className = 'space-y-0';
             
-            // Left side: Visual pipeline timeline
-            const timelineContainer = document.createElement('div');
-            timelineContainer.className = 'flex-shrink-0 w-32 flex flex-col';
-            timelineContainer.innerHTML = this.createPipelineTimeline();
+            // Original image header
+            const originalHeader = document.createElement('div');
+            originalHeader.className = 'flex gap-6 mb-4';
+            originalHeader.innerHTML = `
+                <div class="flex-shrink-0 w-32 flex flex-col items-center">
+                    <img src="/examples/original.png" 
+                         alt="Original" 
+                         class="w-20 h-20 object-cover rounded-lg border-2 border-gray-300">
+                    <div class="text-xs text-gray-600 mt-1 text-center">Original</div>
+                </div>
+                <div class="flex-1 flex items-center">
+                    <div class="text-sm text-gray-500 italic">Your image will be transformed through the pipeline steps below</div>
+                </div>
+            `;
+            pipelineContainer.appendChild(originalHeader);
             
-            // Right side: Pipeline steps
-            const stepsContainer = document.createElement('div');
-            stepsContainer.className = 'flex-1 flex flex-col gap-4 min-w-0 overflow-hidden';
+            // Funnel separator
+            const funnelSeparator = document.createElement('div');
+            funnelSeparator.className = 'flex gap-6 mb-4';
+            funnelSeparator.innerHTML = `
+                <div class="flex-shrink-0 w-32 flex justify-center">
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                </div>
+                <div class="flex-1"></div>
+            `;
+            pipelineContainer.appendChild(funnelSeparator);
             
-            this.pipeline.forEach(step => {
-                const stepElement = this.createPipelineStepElement(step);
-                stepsContainer.appendChild(stepElement);
+            // Pipeline steps
+            this.pipeline.forEach((step, index) => {
+                const stepRow = this.createPipelineStepRow(step, index);
+                pipelineContainer.appendChild(stepRow);
             });
             
-            pipelineContainer.appendChild(timelineContainer);
-            pipelineContainer.appendChild(stepsContainer);
             this.pipelineBuilder.appendChild(pipelineContainer);
         }
     }
     
-    createPipelineTimeline() {
-        let timeline = `
-            <!-- Original Image -->
-            <div class="flex flex-col items-center mb-6">
-                <img src="/examples/original.png" 
-                     alt="Original" 
-                     class="w-20 h-20 object-cover rounded-lg border-2 border-gray-300">
-                <div class="text-xs text-gray-600 mt-1 text-center">Original</div>
-            </div>
-            
-            <!-- Funnel Icon -->
-            <div class="flex justify-center mb-6">
-                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                </svg>
-            </div>
+    createPipelineStepRow(step, index) {
+        const stepRow = document.createElement('div');
+        stepRow.className = 'flex gap-6 mb-4';
+        stepRow.dataset.stepId = step.id;
+        
+        const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
+        const displayPipelineName = selectedPipeline ? selectedPipeline.name : 'unknown';
+        const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
+        
+        // Left side: Preview image
+        const previewSide = document.createElement('div');
+        previewSide.className = 'flex-shrink-0 w-32 flex flex-col items-center';
+        previewSide.innerHTML = `
+            <img src="/examples/source_${displayPipelineName}.png" 
+                 alt="${displayPipelineName}" 
+                 class="w-20 h-20 object-cover rounded-lg border-2 border-blue-300"
+                 onerror="this.src='/examples/original.png'">
+            <div class="text-xs text-gray-600 mt-1 text-center">${this.formatPipelineName(displayPipelineName)}</div>
         `;
         
-        // Add pipeline steps with arrows - each step should align with its card
-        this.pipeline.forEach((step, index) => {
-            const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
-            const displayPipelineName = selectedPipeline ? selectedPipeline.name : 'unknown';
-            
-            timeline += `
-                <!-- Step ${index + 1} - Height matches card -->
-                <div class="flex flex-col items-center" style="min-height: 160px; justify-content: center;">
-                    <img src="/examples/source_${displayPipelineName}.png" 
-                         alt="${displayPipelineName}" 
-                         class="w-20 h-20 object-cover rounded-lg border-2 border-blue-300"
-                         onerror="this.src='/examples/original.png'">
-                    <div class="text-xs text-gray-600 mt-1 text-center">${this.formatPipelineName(displayPipelineName)}</div>
-                </div>
-            `;
-            
-            // Add arrow between steps (but not after the last step)
-            if (index < this.pipeline.length - 1) {
-                timeline += `
-                    <div class="flex justify-center py-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                        </svg>
-                    </div>
-                `;
-            }
-        });
+        // Right side: Pipeline card
+        const cardSide = document.createElement('div');
+        cardSide.className = 'flex-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-move min-w-0 overflow-hidden';
+        cardSide.draggable = true;
+        cardSide.dataset.stepId = step.id;
         
-        return timeline;
-    }
-    
-    createPipelineStepElement(step) {
-        const stepElement = document.createElement('div');
-        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-move flex-shrink-0 min-w-0 overflow-hidden';
-        stepElement.style.minHeight = '160px';
-        stepElement.draggable = true;
-        stepElement.dataset.stepId = step.id;
-        
-        const stepIndex = this.pipeline.findIndex(s => s.id === step.id);
-        const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
-        
-        if (!selectedPipeline) {
-            console.warn(`Pipeline '${step.pipeline}' not found in available pipelines:`, this.pipelines.map(p => p.name));
-            console.warn('Available pipelines:', this.pipelines);
-        }
-        
-        const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
-        const displayPipelineName = selectedPipeline ? selectedPipeline.name : (this.pipelines[0] ? this.pipelines[0].name : 'Unknown');
-        
-        stepElement.innerHTML = `
+        cardSide.innerHTML = `
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center min-w-0 flex-1">
                     <div class="bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center font-medium text-sm mr-3 flex-shrink-0 text-gray-700">
-                        ${stepIndex + 1}
+                        ${index + 1}
                     </div>
                     <div class="min-w-0 flex-1">
                         <div class="font-medium text-gray-900 truncate">${this.formatPipelineName(displayPipelineName)}</div>
@@ -412,7 +402,7 @@ class PipelineEditor {
                 <button class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
                         onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
             </div>
-            <div class="mb-4" id="pipeline-selector-${step.id}">
+            <div class="mb-0" id="pipeline-selector-${step.id}">
                 <button class="w-full p-3 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between" 
                         onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
                     <span class="font-medium text-gray-900">${this.formatPipelineName(step.pipeline)}</span>
@@ -437,11 +427,35 @@ class PipelineEditor {
             </div>
         `;
         
-        // Add drag event listeners
-        stepElement.addEventListener('dragstart', this.handleDragStart.bind(this));
-        stepElement.addEventListener('dragend', this.handleDragEnd.bind(this));
+        // Add drag event listeners to the card
+        cardSide.addEventListener('dragstart', this.handleDragStart.bind(this));
+        cardSide.addEventListener('dragend', this.handleDragEnd.bind(this));
         
-        return stepElement;
+        // Add arrow after this step (except for the last one)
+        if (index < this.pipeline.length - 1) {
+            const arrowDiv = document.createElement('div');
+            arrowDiv.className = 'flex gap-6 mb-2';
+            arrowDiv.innerHTML = `
+                <div class="flex-shrink-0 w-32 flex justify-center">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                    </svg>
+                </div>
+                <div class="flex-1"></div>
+            `;
+            stepRow.appendChild(previewSide);
+            stepRow.appendChild(cardSide);
+            
+            // Return a fragment with both the step and arrow
+            const fragment = document.createDocumentFragment();
+            fragment.appendChild(stepRow);
+            fragment.appendChild(arrowDiv);
+            return fragment;
+        }
+        
+        stepRow.appendChild(previewSide);
+        stepRow.appendChild(cardSide);
+        return stepRow;
     }
 
     updateProcessButton() {
