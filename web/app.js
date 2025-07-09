@@ -708,6 +708,59 @@ class PipelineEditor {
 // Initialize the application
 const pipelineEditor = new PipelineEditor();
 
+// Demo effect cycling
+class DemoEffectCycler {
+    constructor() {
+        this.effects = [
+            { name: 'vaporwave', displayName: 'Vaporwave', borderColor: 'border-purple-300' },
+            { name: 'glitch_art', displayName: 'Glitch Art', borderColor: 'border-red-300' },
+            { name: 'neon_edge', displayName: 'Neon Edge', borderColor: 'border-cyan-300' },
+            { name: 'oil_painting', displayName: 'Oil Painting', borderColor: 'border-orange-300' },
+            { name: 'pixel_sort', displayName: 'Pixel Sort', borderColor: 'border-green-300' },
+            { name: 'kaleidoscope', displayName: 'Kaleidoscope', borderColor: 'border-pink-300' },
+            { name: 'comic_book', displayName: 'Comic Book', borderColor: 'border-blue-300' },
+            { name: 'cool_variations', displayName: 'Cool Variations', borderColor: 'border-indigo-300' }
+        ];
+        this.currentIndex = 0;
+        this.imageElement = document.getElementById('demo-effect-image');
+        this.nameElement = document.getElementById('demo-effect-name');
+        
+        if (this.imageElement && this.nameElement) {
+            this.startCycling();
+        }
+    }
+    
+    startCycling() {
+        setInterval(() => {
+            this.cycleToNext();
+        }, 2000);
+    }
+    
+    cycleToNext() {
+        // Fade out
+        this.imageElement.style.opacity = '0';
+        this.nameElement.style.opacity = '0';
+        
+        setTimeout(() => {
+            // Move to next effect
+            this.currentIndex = (this.currentIndex + 1) % this.effects.length;
+            const effect = this.effects[this.currentIndex];
+            
+            // Update image and text
+            this.imageElement.src = `/examples/source_${effect.name}.png`;
+            this.imageElement.className = `w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg border-2 ${effect.borderColor} shadow-sm transition-opacity duration-500`;
+            this.nameElement.textContent = effect.displayName;
+            
+            // Fade in
+            this.imageElement.style.opacity = '1';
+            this.nameElement.style.opacity = '1';
+        }, 250); // Half of transition duration
+    }
+}
+
+// Initialize demo cycler
+const demoCycler = new DemoEffectCycler();
+
 // Close dropdowns when clicking outside
 document.addEventListener('click', (event) => {
     if (!event.target.closest('.pipeline-dropdown') && !event.target.closest('button')) {

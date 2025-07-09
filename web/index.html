@@ -60,10 +60,13 @@
                 </div>
                 
                 <div class="text-center">
-                    <img src="/examples/source_vaporwave.png" 
-                         alt="Vaporwave effect" 
-                         class="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg border-2 border-purple-300 shadow-sm">
-                    <div class="text-xs md:text-sm text-gray-500 mt-2">Vaporwave</div>
+                    <div class="relative">
+                        <img id="demo-effect-image" 
+                             src="/examples/source_vaporwave.png" 
+                             alt="Effect demonstration" 
+                             class="w-24 h-24 md:w-32 md:h-32 object-cover rounded-lg border-2 border-purple-300 shadow-sm transition-opacity duration-500">
+                    </div>
+                    <div id="demo-effect-name" class="text-xs md:text-sm text-gray-500 mt-2 transition-opacity duration-500">Vaporwave</div>
                 </div>
             </div>
         </div>
