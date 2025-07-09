@@ -250,104 +250,11 @@ class PipelineEditor {
         };
         
         this.pipeline.push(step);
-        this.renderPipelineStep(step);
+        this.renderPipeline();
         this.updateProcessButton();
         this.saveStateToURL();
     }
 
-    renderPipelineStep(step) {
-        // Don't render if pipelines haven't loaded yet
-        if (this.pipelines.length === 0) {
-            console.warn('Pipelines not loaded yet, cannot render step');
-            return;
-        }
-        
-        const stepElement = document.createElement('div');
-        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm cursor-move';
-        stepElement.draggable = true;
-        stepElement.dataset.stepId = step.id;
-        
-        // Clear the "no steps" message
-        if (this.pipeline.length === 1) {
-            this.pipelineBuilder.innerHTML = '';
-        }
-
-        const stepIndex = this.pipeline.findIndex(s => s.id === step.id);
-        const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
-        
-        if (!selectedPipeline) {
-            console.warn(`Pipeline '${step.pipeline}' not found in available pipelines:`, this.pipelines.map(p => p.name));
-            console.warn('Available pipelines:', this.pipelines);
-        }
-        
-        const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
-        
-        // Ensure we have a valid pipeline name to display
-        const displayPipelineName = selectedPipeline ? selectedPipeline.name : (this.pipelines[0] ? this.pipelines[0].name : 'Unknown');
-        
-        stepElement.innerHTML = `
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center min-w-0 flex-1">
-                    <div class="bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center font-medium text-sm mr-3 flex-shrink-0 text-gray-700">
-                        ${stepIndex + 1}
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="font-medium text-gray-900 truncate">${this.formatPipelineName(displayPipelineName)}</div>
-                        <div class="text-sm text-gray-500 truncate">${pipelineDescription}</div>
-                    </div>
-                </div>
-                <button class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
-                        onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
-            </div>
-            <div class="mb-4" id="pipeline-selector-${step.id}">
-                <button class="w-full p-3 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between" 
-                        onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
-                    <span class="font-medium text-gray-900">${this.formatPipelineName(step.pipeline)}</span>
-                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-                <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg" id="dropdown-${step.id}">
-                    <div class="pipeline-grid">
-                        ${this.pipelines.map(p => `
-                            <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
-                                 onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
-                                <img src="/examples/source_${p.name}.png" 
-                                     alt="${p.name}" 
-                                     class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
-                                     onerror="this.src='/examples/original.png'">
-                                <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center justify-center gap-4 text-sm text-gray-500">
-                <div class="text-center">
-                    <img src="/examples/original.png" 
-                         alt="Original" 
-                         class="w-16 h-16 object-cover rounded-lg border border-gray-300 mb-1">
-                    <div>Original</div>
-                </div>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-                <div class="text-center">
-                    <img id="preview-${step.id}" src="/examples/source_${displayPipelineName}.png" 
-                         alt="${displayPipelineName} preview" 
-                         class="w-16 h-16 object-cover rounded-lg border border-gray-300 mb-1"
-                         onerror="this.src='/examples/original.png'">
-                    <div>${this.formatPipelineName(displayPipelineName)}</div>
-                </div>
-            </div>
-        `;
-
-        // Add drag event listeners
-        stepElement.addEventListener('dragstart', this.handleDragStart.bind(this));
-        stepElement.addEventListener('dragend', this.handleDragEnd.bind(this));
-
-        this.pipelineBuilder.appendChild(stepElement);
-    }
 
     togglePipelineDropdown(stepId) {
         const dropdown = document.getElementById(`dropdown-${stepId}`);
@@ -400,10 +307,140 @@ class PipelineEditor {
                 </div>
             `;
         } else {
+            // Create the visual pipeline flow
+            const pipelineContainer = document.createElement('div');
+            pipelineContainer.className = 'flex gap-6';
+            
+            // Left side: Visual pipeline timeline
+            const timelineContainer = document.createElement('div');
+            timelineContainer.className = 'flex-shrink-0 w-32';
+            timelineContainer.innerHTML = this.createPipelineTimeline();
+            
+            // Right side: Pipeline steps
+            const stepsContainer = document.createElement('div');
+            stepsContainer.className = 'flex-1 space-y-4';
+            
             this.pipeline.forEach(step => {
-                this.renderPipelineStep(step);
+                const stepElement = this.createPipelineStepElement(step);
+                stepsContainer.appendChild(stepElement);
             });
+            
+            pipelineContainer.appendChild(timelineContainer);
+            pipelineContainer.appendChild(stepsContainer);
+            this.pipelineBuilder.appendChild(pipelineContainer);
         }
+    }
+    
+    createPipelineTimeline() {
+        let timeline = `
+            <!-- Original Image -->
+            <div class="flex flex-col items-center mb-4">
+                <img src="/examples/original.png" 
+                     alt="Original" 
+                     class="w-20 h-20 object-cover rounded-lg border-2 border-gray-300">
+                <div class="text-xs text-gray-600 mt-1 text-center">Original</div>
+            </div>
+            
+            <!-- Funnel Icon -->
+            <div class="flex justify-center mb-4">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                </svg>
+            </div>
+        `;
+        
+        // Add pipeline steps with arrows
+        this.pipeline.forEach((step, index) => {
+            const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
+            const displayPipelineName = selectedPipeline ? selectedPipeline.name : 'unknown';
+            
+            timeline += `
+                <!-- Step ${index + 1} -->
+                <div class="flex flex-col items-center mb-4">
+                    <img src="/examples/source_${displayPipelineName}.png" 
+                         alt="${displayPipelineName}" 
+                         class="w-20 h-20 object-cover rounded-lg border-2 border-blue-300"
+                         onerror="this.src='/examples/original.png'">
+                    <div class="text-xs text-gray-600 mt-1 text-center">${this.formatPipelineName(displayPipelineName)}</div>
+                </div>
+            `;
+            
+            // Add arrow between steps (but not after the last step)
+            if (index < this.pipeline.length - 1) {
+                timeline += `
+                    <div class="flex justify-center mb-4">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                        </svg>
+                    </div>
+                `;
+            }
+        });
+        
+        return timeline;
+    }
+    
+    createPipelineStepElement(step) {
+        const stepElement = document.createElement('div');
+        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-move';
+        stepElement.draggable = true;
+        stepElement.dataset.stepId = step.id;
+        
+        const stepIndex = this.pipeline.findIndex(s => s.id === step.id);
+        const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
+        
+        if (!selectedPipeline) {
+            console.warn(`Pipeline '${step.pipeline}' not found in available pipelines:`, this.pipelines.map(p => p.name));
+            console.warn('Available pipelines:', this.pipelines);
+        }
+        
+        const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
+        const displayPipelineName = selectedPipeline ? selectedPipeline.name : (this.pipelines[0] ? this.pipelines[0].name : 'Unknown');
+        
+        stepElement.innerHTML = `
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center min-w-0 flex-1">
+                    <div class="bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center font-medium text-sm mr-3 flex-shrink-0 text-gray-700">
+                        ${stepIndex + 1}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <div class="font-medium text-gray-900 truncate">${this.formatPipelineName(displayPipelineName)}</div>
+                        <div class="text-sm text-gray-500 truncate">${pipelineDescription}</div>
+                    </div>
+                </div>
+                <button class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
+                        onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
+            </div>
+            <div class="mb-4" id="pipeline-selector-${step.id}">
+                <button class="w-full p-3 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between" 
+                        onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
+                    <span class="font-medium text-gray-900">${this.formatPipelineName(step.pipeline)}</span>
+                    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg" id="dropdown-${step.id}">
+                    <div class="pipeline-grid">
+                        ${this.pipelines.map(p => `
+                            <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
+                                 onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
+                                <img src="/examples/source_${p.name}.png" 
+                                     alt="${p.name}" 
+                                     class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
+                                     onerror="this.src='/examples/original.png'">
+                                <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add drag event listeners
+        stepElement.addEventListener('dragstart', this.handleDragStart.bind(this));
+        stepElement.addEventListener('dragend', this.handleDragEnd.bind(this));
+        
+        return stepElement;
     }
 
     updateProcessButton() {
