@@ -205,7 +205,7 @@ class PipelineEditor {
             fileItem.innerHTML = `
                 <div class="flex items-center justify-between mb-3">
                     <span class="font-medium text-gray-700 truncate flex-1 mr-3">${file.name}</span>
-                    <button class="bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors flex-shrink-0" 
+                    <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm transition-colors flex-shrink-0" 
                             onclick="pipelineEditor.removeFile(${index})">×</button>
                 </div>
                 <div class="flex items-center gap-3">
@@ -263,7 +263,7 @@ class PipelineEditor {
         }
         
         const stepElement = document.createElement('div');
-        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm';
+        stepElement.className = 'bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm cursor-move';
         stepElement.draggable = true;
         stepElement.dataset.stepId = step.id;
         
@@ -296,7 +296,7 @@ class PipelineEditor {
                         <div class="text-sm text-gray-500 truncate">${pipelineDescription}</div>
                     </div>
                 </div>
-                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
+                <button class="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded-md text-sm transition-colors flex-shrink-0 ml-3" 
                         onclick="pipelineEditor.removeStep(${step.id})">Remove</button>
             </div>
             <div class="mb-4" id="pipeline-selector-${step.id}">
@@ -432,20 +432,60 @@ class PipelineEditor {
     setupSortable() {
         this.pipelineBuilder.addEventListener('dragover', this.handleDragOver.bind(this));
         this.pipelineBuilder.addEventListener('drop', this.handleDrop.bind(this));
+        this.pipelineBuilder.addEventListener('dragenter', this.handleDragEnter.bind(this));
     }
 
     handleDragStart(event) {
         event.dataTransfer.setData('text/plain', event.target.dataset.stepId);
+        event.dataTransfer.effectAllowed = 'move';
         event.target.style.opacity = '0.5';
+        
+        // Add visual feedback to all other pipeline steps
+        const allSteps = this.pipelineBuilder.querySelectorAll('[data-step-id]');
+        allSteps.forEach(step => {
+            if (step !== event.target) {
+                step.style.borderColor = '#3b82f6';
+                step.style.borderWidth = '2px';
+                step.style.borderStyle = 'dashed';
+            }
+        });
     }
 
     handleDragEnd(event) {
         event.target.style.opacity = '1';
+        
+        // Remove visual feedback from all pipeline steps
+        const allSteps = this.pipelineBuilder.querySelectorAll('[data-step-id]');
+        allSteps.forEach(step => {
+            step.style.borderColor = '';
+            step.style.borderWidth = '';
+            step.style.borderStyle = '';
+        });
+    }
+
+    handleDragEnter(event) {
+        event.preventDefault();
+        const targetElement = event.target.closest('[data-step-id]');
+        if (targetElement) {
+            targetElement.style.backgroundColor = '#f3f4f6';
+        }
     }
 
     handleDragOver(event) {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
+        
+        // Clear any previous hover effects
+        const allSteps = this.pipelineBuilder.querySelectorAll('[data-step-id]');
+        allSteps.forEach(step => {
+            step.style.backgroundColor = '';
+        });
+        
+        // Add hover effect to current target
+        const targetElement = event.target.closest('[data-step-id]');
+        if (targetElement) {
+            targetElement.style.backgroundColor = '#e5e7eb';
+        }
     }
 
     handleDrop(event) {
@@ -454,6 +494,15 @@ class PipelineEditor {
         const draggedId = parseInt(event.dataTransfer.getData('text/plain'));
         const targetElement = event.target.closest('[data-step-id]');
         
+        // Clear all visual feedback
+        const allSteps = this.pipelineBuilder.querySelectorAll('[data-step-id]');
+        allSteps.forEach(step => {
+            step.style.backgroundColor = '';
+            step.style.borderColor = '';
+            step.style.borderWidth = '';
+            step.style.borderStyle = '';
+        });
+        
         if (targetElement && targetElement.dataset.stepId !== draggedId.toString()) {
             const targetId = parseInt(targetElement.dataset.stepId);
             
@@ -461,12 +510,14 @@ class PipelineEditor {
             const draggedIndex = this.pipeline.findIndex(s => s.id === draggedId);
             const targetIndex = this.pipeline.findIndex(s => s.id === targetId);
             
-            // Reorder the pipeline
-            const [draggedStep] = this.pipeline.splice(draggedIndex, 1);
-            this.pipeline.splice(targetIndex, 0, draggedStep);
-            
-            this.renderPipeline();
-            this.saveStateToURL();
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                // Reorder the pipeline
+                const [draggedStep] = this.pipeline.splice(draggedIndex, 1);
+                this.pipeline.splice(targetIndex, 0, draggedStep);
+                
+                this.renderPipeline();
+                this.saveStateToURL();
+            }
         }
     }
 
