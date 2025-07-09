@@ -168,5 +168,6 @@ pids/
 logs/
 
 # Temporary directories
+temp/
 temp_uploads/
 temp_outputs/
