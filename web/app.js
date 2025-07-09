@@ -270,6 +270,8 @@ class PipelineEditor {
 
     togglePipelineDropdown(stepId) {
         const dropdown = document.getElementById(`dropdown-${stepId}`);
+        const button = document.querySelector(`#pipeline-selector-${stepId} button`);
+        const stepContainer = dropdown.closest('.relative');
         const isHidden = dropdown.classList.contains('hidden');
         
         // Close all other dropdowns
@@ -281,6 +283,39 @@ class PipelineEditor {
         
         // Toggle this dropdown
         if (isHidden) {
+            // Position dropdown relative to button within the step container
+            const buttonRect = button.getBoundingClientRect();
+            const containerRect = stepContainer.getBoundingClientRect();
+            
+            // Calculate initial position relative to container
+            let top = buttonRect.bottom - containerRect.top + 8;
+            let left = buttonRect.left - containerRect.left;
+            
+            // Show dropdown temporarily to get its dimensions
+            dropdown.style.visibility = 'hidden';
+            dropdown.classList.remove('hidden');
+            const dropdownRect = dropdown.getBoundingClientRect();
+            dropdown.classList.add('hidden');
+            dropdown.style.visibility = 'visible';
+            
+            // Check viewport boundaries and adjust position
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Adjust horizontal position if dropdown goes off-screen
+            if (buttonRect.left + dropdownRect.width > viewportWidth) {
+                // Move dropdown to the left to fit in viewport
+                left = buttonRect.right - containerRect.left - dropdownRect.width;
+            }
+            
+            // Adjust vertical position if dropdown goes off-screen
+            if (buttonRect.bottom + dropdownRect.height > viewportHeight) {
+                // Show dropdown above the button instead
+                top = buttonRect.top - containerRect.top - dropdownRect.height - 8;
+            }
+            
+            dropdown.style.top = `${top}px`;
+            dropdown.style.left = `${left}px`;
             dropdown.classList.remove('hidden');
         } else {
             dropdown.classList.add('hidden');
@@ -319,38 +354,9 @@ class PipelineEditor {
                 </div>
             `;
         } else {
-            // Create the unified pipeline flow
+            // Create the pipeline flow
             const pipelineContainer = document.createElement('div');
-            pipelineContainer.className = 'space-y-0';
-            
-            // Original image header
-            const originalHeader = document.createElement('div');
-            originalHeader.className = 'flex gap-6 mb-4';
-            originalHeader.innerHTML = `
-                <div class="flex-shrink-0 w-32 flex flex-col items-center">
-                    <img src="/examples/original.png" 
-                         alt="Original" 
-                         class="w-20 h-20 object-cover rounded-lg border-2 border-gray-300">
-                    <div class="text-xs text-gray-600 mt-1 text-center">Original</div>
-                </div>
-                <div class="flex-1 flex items-center">
-                    <div class="text-sm text-gray-500 italic">Your image will be transformed through the effects below</div>
-                </div>
-            `;
-            pipelineContainer.appendChild(originalHeader);
-            
-            // Funnel separator
-            const funnelSeparator = document.createElement('div');
-            funnelSeparator.className = 'flex gap-6 mb-4';
-            funnelSeparator.innerHTML = `
-                <div class="flex-shrink-0 w-32 flex justify-center">
-                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                    </svg>
-                </div>
-                <div class="flex-1"></div>
-            `;
-            pipelineContainer.appendChild(funnelSeparator);
+            pipelineContainer.className = 'space-y-4';
             
             // Pipeline steps
             this.pipeline.forEach((step, index) => {
@@ -363,95 +369,83 @@ class PipelineEditor {
     }
     
     createPipelineStepRow(step, index) {
-        const stepRow = document.createElement('div');
-        stepRow.className = 'flex gap-6 mb-4';
-        stepRow.dataset.stepId = step.id;
-        
         const selectedPipeline = this.pipelines.find(p => p.name === step.pipeline);
         const displayPipelineName = selectedPipeline ? selectedPipeline.name : 'unknown';
         const pipelineDescription = selectedPipeline ? selectedPipeline.description : 'Unknown pipeline';
         
-        // Left side: Preview image
-        const previewSide = document.createElement('div');
-        previewSide.className = 'flex-shrink-0 w-32 flex flex-col items-center';
-        previewSide.innerHTML = `
-            <img src="/examples/source_${displayPipelineName}.png" 
-                 alt="${displayPipelineName}" 
-                 class="w-20 h-20 object-cover rounded-lg border-2 border-blue-300"
-                 onerror="this.src='/examples/original.png'">
-            <div class="text-xs text-gray-600 mt-1 text-center">${this.formatPipelineName(displayPipelineName)}</div>
-        `;
-        
-        // Right side: Pipeline card
+        // Pipeline card with half-image layout taking full width
         const cardSide = document.createElement('div');
-        cardSide.className = 'flex-1 bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-move min-w-0 overflow-hidden';
+        cardSide.className = 'bg-white border border-gray-200 rounded-lg shadow-sm cursor-move min-w-0 relative';
         cardSide.draggable = true;
         cardSide.dataset.stepId = step.id;
         
         cardSide.innerHTML = `
-            <div class="flex items-center gap-3 mb-3">
-                <div class="flex-1" id="pipeline-selector-${step.id}">
-                    <button class="w-full p-3 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between font-medium text-gray-900" 
-                            onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
-                        <span>${this.formatPipelineName(step.pipeline)}</span>
-                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-                    <div class="pipeline-dropdown hidden mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto" id="dropdown-${step.id}" style="max-height: 400px;">
-                        <div class="pipeline-grid">
-                            ${this.pipelines.map(p => `
-                                <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
-                                     onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
-                                    <img src="/examples/source_${p.name}.png" 
-                                         alt="${p.name}" 
-                                         class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
-                                         onerror="this.src='/examples/original.png'">
-                                    <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
-                                </div>
-                            `).join('')}
-                        </div>
+            <div class="flex h-32 overflow-hidden rounded-lg">
+                <!-- Left half: Full-height image -->
+                <div class="w-1/2 relative">
+                    <img src="/examples/source_${displayPipelineName}.png" 
+                         alt="${displayPipelineName}" 
+                         class="w-full h-full object-cover"
+                         onerror="this.src='/examples/original.png'">
+                    <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1 text-center">
+                        ${this.formatPipelineName(displayPipelineName)}
                     </div>
                 </div>
-                <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-8 h-8 flex items-center justify-center transition-colors flex-shrink-0" 
-                        onclick="pipelineEditor.removeStep(${step.id})" title="Remove step">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
+                
+                <!-- Right half: Content -->
+                <div class="w-1/2 p-4 flex flex-col">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="flex-1 relative" id="pipeline-selector-${step.id}">
+                            <button class="w-full p-2 border border-gray-300 rounded-lg bg-white text-left hover:bg-gray-50 transition-colors flex items-center justify-between font-medium text-gray-900 text-sm" 
+                                    onclick="pipelineEditor.togglePipelineDropdown(${step.id})">
+                                <span>${this.formatPipelineName(step.pipeline)}</span>
+                                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <button class="bg-gray-400 hover:bg-gray-500 text-white rounded-full w-6 h-6 flex items-center justify-center transition-colors flex-shrink-0" 
+                                onclick="pipelineEditor.removeStep(${step.id})" title="Remove step">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="text-xs text-gray-500 leading-relaxed flex-1">${pipelineDescription}</div>
+                </div>
             </div>
-            <div class="text-sm text-gray-500 leading-relaxed">${pipelineDescription}</div>
         `;
+        
+        // Add dropdown outside the card structure
+        const dropdownContainer = document.createElement('div');
+        dropdownContainer.innerHTML = `
+            <div class="pipeline-dropdown hidden absolute mt-2 p-4 border border-gray-200 rounded-lg bg-white shadow-lg overflow-auto z-50" id="dropdown-${step.id}" style="max-height: 400px; min-width: 400px;">
+                <div class="pipeline-grid">
+                    ${this.pipelines.map(p => `
+                        <div class="pipeline-option ${p.name === step.pipeline ? 'selected' : ''} cursor-pointer bg-white border border-gray-200 rounded-lg p-3 text-center hover:shadow-md transition-all"
+                             onclick="pipelineEditor.selectPipeline(${step.id}, '${p.name}')">
+                            <img src="/examples/source_${p.name}.png" 
+                                 alt="${p.name}" 
+                                 class="w-full h-20 object-cover rounded-md mb-2 border border-gray-300"
+                                 onerror="this.src='/examples/original.png'">
+                            <div class="font-medium text-sm text-gray-900">${this.formatPipelineName(p.name)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        // Create a container that includes both the card and dropdown
+        const stepContainer = document.createElement('div');
+        stepContainer.className = 'relative';
+        stepContainer.appendChild(cardSide);
+        stepContainer.appendChild(dropdownContainer.firstElementChild);
         
         // Add drag event listeners to the card
         cardSide.addEventListener('dragstart', this.handleDragStart.bind(this));
         cardSide.addEventListener('dragend', this.handleDragEnd.bind(this));
         
-        // Add arrow after this step (except for the last one)
-        if (index < this.pipeline.length - 1) {
-            const arrowDiv = document.createElement('div');
-            arrowDiv.className = 'flex gap-6 mb-2';
-            arrowDiv.innerHTML = `
-                <div class="flex-shrink-0 w-32 flex justify-center">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                    </svg>
-                </div>
-                <div class="flex-1"></div>
-            `;
-            stepRow.appendChild(previewSide);
-            stepRow.appendChild(cardSide);
-            
-            // Return a fragment with both the step and arrow
-            const fragment = document.createDocumentFragment();
-            fragment.appendChild(stepRow);
-            fragment.appendChild(arrowDiv);
-            return fragment;
-        }
-        
-        stepRow.appendChild(previewSide);
-        stepRow.appendChild(cardSide);
-        return stepRow;
+        return stepContainer;
     }
 
     updateProcessButton() {
