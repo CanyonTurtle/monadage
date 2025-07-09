@@ -2,8 +2,8 @@
 # This template will be processed by deploy.sh
 
 worker_processes auto;
-error_log /var/log/nginx/monadage_error.log;
-pid /var/run/nginx/nginx.pid;
+error_log PROJECT_DIR/logs/nginx_error.log;
+pid PROJECT_DIR/pids/nginx.pid;
 
 events {
     worker_connections 1024;
@@ -14,7 +14,7 @@ http {
     default_type application/octet-stream;
 
     # Logging
-    access_log /var/log/nginx/monadage_access.log;
+    access_log PROJECT_DIR/logs/nginx_access.log;
 
     # Basic settings
     sendfile on;
@@ -95,7 +95,7 @@ http {
 
         # Certbot challenge
         location /.well-known/acme-challenge/ {
-            root /var/www/certbot;
+            root PROJECT_DIR/certbot;
         }
     }
 }

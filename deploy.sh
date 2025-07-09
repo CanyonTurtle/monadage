@@ -12,6 +12,8 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NGINX_CONF="$PROJECT_DIR/nginx.conf"
 PID_DIR="$PROJECT_DIR/pids"
 LOG_DIR="$PROJECT_DIR/logs"
+CERTBOT_DIR="$PROJECT_DIR/certbot"
+SSL_DIR="$PROJECT_DIR/ssl"
 
 # Load environment variables
 if [ -f "$PROJECT_DIR/production.env" ]; then
@@ -31,7 +33,7 @@ for var in "${required_vars[@]}"; do
 done
 
 # Create necessary directories
-mkdir -p "$PID_DIR" "$LOG_DIR" "/var/www/certbot" "/var/log/nginx"
+mkdir -p "$PID_DIR" "$LOG_DIR" "$CERTBOT_DIR" "$SSL_DIR"
 
 echo -e "${GREEN}🚀 Starting Monadage deployment...${NC}"
 
@@ -57,21 +59,36 @@ setup_ssl() {
     echo -e "${YELLOW}Setting up SSL certificate...${NC}"
     
     # Check if certificate already exists
-    if [ ! -f "/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" ]; then
+    if [ ! -f "$SSL_DIR/fullchain.pem" ]; then
         echo "Generating new SSL certificate for $DOMAIN_NAME..."
         
-        # Get certificate
+        # Get certificate with custom config and work directories
         certbot certonly \
             --webroot \
-            --webroot-path=/var/www/certbot \
+            --webroot-path="$CERTBOT_DIR" \
             --email "$SSL_EMAIL" \
             --agree-tos \
             --no-eff-email \
             --domains "$DOMAIN_NAME" \
-            --non-interactive
+            --non-interactive \
+            --config-dir "$PROJECT_DIR/letsencrypt" \
+            --work-dir "$PROJECT_DIR/letsencrypt-work" \
+            --logs-dir "$LOG_DIR"
+        
+        # Copy certificates to our SSL directory
+        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" "$SSL_DIR/"
+        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/privkey.pem" "$SSL_DIR/"
     else
         echo "SSL certificate already exists. Renewing if needed..."
-        certbot renew --quiet
+        certbot renew \
+            --config-dir "$PROJECT_DIR/letsencrypt" \
+            --work-dir "$PROJECT_DIR/letsencrypt-work" \
+            --logs-dir "$LOG_DIR" \
+            --quiet
+        
+        # Update our SSL directory
+        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/fullchain.pem" "$SSL_DIR/" 2>/dev/null || true
+        cp "$PROJECT_DIR/letsencrypt/live/$DOMAIN_NAME/privkey.pem" "$SSL_DIR/" 2>/dev/null || true
     fi
 }
 
@@ -79,18 +96,16 @@ setup_ssl() {
 generate_nginx_config() {
     echo -e "${YELLOW}Generating nginx configuration...${NC}"
     
-    # SSL certificate paths
-    SSL_CERT_PATH="/etc/letsencrypt/live/$DOMAIN_NAME/fullchain.pem"
-    SSL_KEY_PATH="/etc/letsencrypt/live/$DOMAIN_NAME/privkey.pem"
+    # SSL certificate paths (local)
+    SSL_CERT_PATH="$SSL_DIR/fullchain.pem"
+    SSL_KEY_PATH="$SSL_DIR/privkey.pem"
     
     # Generate nginx config from template
     sed -e "s|DOMAIN_NAME|$DOMAIN_NAME|g" \
         -e "s|SSL_CERT_PATH|$SSL_CERT_PATH|g" \
         -e "s|SSL_KEY_PATH|$SSL_KEY_PATH|g" \
+        -e "s|PROJECT_DIR|$PROJECT_DIR|g" \
         "$PROJECT_DIR/nginx.conf.template" > "$NGINX_CONF"
-    
-    # Update PID file location in config
-    sed -i "s|/var/run/nginx/nginx.pid|$PID_DIR/nginx.pid|g" "$NGINX_CONF"
 }
 
 # Function to start services

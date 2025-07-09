@@ -171,7 +171,7 @@ else
 fi
 
 # 9. Create necessary directories
-directories=("logs" "pids")
+directories=("logs" "pids" "certbot" "ssl" "letsencrypt" "letsencrypt-work")
 for dir in "${directories[@]}"; do
     if [[ ! -d "$dir" ]]; then
         mkdir -p "$dir"
