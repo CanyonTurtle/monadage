@@ -314,8 +314,8 @@ class PipelineEditor {
                     <svg class="mx-auto w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                     </svg>
-                    <p>No processing steps added yet.</p>
-                    <p class="text-sm">Click "Add processing step" to start building your pipeline.</p>
+                    <p>No effects added yet.</p>
+                    <p class="text-sm">Click "Add another effect" to start transforming your photos.</p>
                 </div>
             `;
         } else {
@@ -334,7 +334,7 @@ class PipelineEditor {
                     <div class="text-xs text-gray-600 mt-1 text-center">Original</div>
                 </div>
                 <div class="flex-1 flex items-center">
-                    <div class="text-sm text-gray-500 italic">Your image will be transformed through the pipeline steps below</div>
+                    <div class="text-sm text-gray-500 italic">Your image will be transformed through the effects below</div>
                 </div>
             `;
             pipelineContainer.appendChild(originalHeader);
@@ -461,17 +461,17 @@ class PipelineEditor {
         this.processBtn.disabled = !hasFiles || !hasPipeline;
         
         if (!hasFiles && !hasPipeline) {
-            this.processBtn.textContent = 'Add files and pipeline steps to process';
+            this.processBtn.textContent = 'Add photos and effects to transform';
         } else if (!hasFiles) {
-            this.processBtn.textContent = 'Add files to process';
+            this.processBtn.textContent = 'Add photos to transform';
         } else if (!hasPipeline) {
-            this.processBtn.textContent = 'Add pipeline steps to process';
+            this.processBtn.textContent = 'Add effects to transform';
         } else {
             this.processBtn.innerHTML = `
                 <svg class="inline w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                 </svg>
-                Process images
+                Transform my photos
             `;
         }
     }
