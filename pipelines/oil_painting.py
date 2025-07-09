@@ -1,5 +1,5 @@
 from pathlib import Path
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageEnhance
 import numpy as np
 import random
 
@@ -24,66 +24,42 @@ class OilPaintingPipeline(Pipeline):
         return f"Creates oil painting effect with brush size {self.brush_size}"
     
     def _oil_paint_effect(self, img: Image.Image) -> Image.Image:
-        """Apply oil painting effect using statistical analysis"""
-        data = np.array(img)
-        height, width, channels = data.shape
-        result = np.zeros_like(data)
+        """Apply oil painting effect using optimized approach"""
+        # Resize image for faster processing if too large
+        original_size = img.size
+        if max(original_size) > 800:
+            # Scale down for processing
+            scale_factor = 800 / max(original_size)
+            new_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
+            img = img.resize(new_size, Image.LANCZOS)
         
-        for y in range(height):
-            for x in range(width):
-                # Define neighborhood
-                y_min = max(0, y - self.brush_size)
-                y_max = min(height, y + self.brush_size + 1)
-                x_min = max(0, x - self.brush_size)
-                x_max = min(width, x + self.brush_size + 1)
-                
-                # Get neighborhood pixels
-                neighborhood = data[y_min:y_max, x_min:x_max]
-                
-                # Create intensity levels
-                intensities = {}
-                intensity_counts = {}
-                
-                for ny in range(neighborhood.shape[0]):
-                    for nx in range(neighborhood.shape[1]):
-                        pixel = neighborhood[ny, nx]
-                        # Calculate intensity level - handle both RGB and grayscale
-                        if len(pixel.shape) == 0:  # scalar
-                            pixel_mean = float(pixel)
-                        else:  # array
-                            pixel_mean = float(np.mean(pixel))
-                        intensity = int(pixel_mean / (256 // self.intensity)) * (256 // self.intensity)
-                        
-                        if intensity not in intensities:
-                            intensities[intensity] = []
-                            intensity_counts[intensity] = 0
-                        
-                        intensities[intensity].append(pixel)
-                        intensity_counts[intensity] += 1
-                
-                # Find most common intensity
-                if intensity_counts:
-                    most_common_intensity = max(intensity_counts.keys(), key=lambda k: intensity_counts[k])
-                    # Average all pixels at this intensity level
-                    avg_pixel = np.mean(intensities[most_common_intensity], axis=0)
-                    result[y, x] = avg_pixel.astype(np.uint8)
-                else:
-                    result[y, x] = data[y, x]
+        # Apply stronger blur and quantization for oil painting effect
+        blurred = img.filter(ImageFilter.GaussianBlur(radius=2))
         
-        return Image.fromarray(result)
+        # Quantize colors heavily for oil painting look
+        quantized = blurred.quantize(colors=32, method=Image.MEDIANCUT)
+        result = quantized.convert("RGB")
+        
+        # Apply edge-preserving smoothing
+        for _ in range(2):
+            result = result.filter(ImageFilter.SMOOTH_MORE)
+        
+        # Resize back to original size if we scaled down
+        if max(original_size) > 800:
+            result = result.resize(original_size, Image.LANCZOS)
+        
+        return result
     
     def _add_canvas_texture(self, img: Image.Image) -> Image.Image:
-        """Add subtle canvas texture"""
-        data = np.array(img)
-        height, width = data.shape[:2]
+        """Add subtle canvas texture using PIL filters for speed"""
+        # Use PIL's built-in texture filter for speed
+        textured = img.filter(ImageFilter.UnsharpMask(radius=0.5, percent=150, threshold=3))
         
-        # Create noise pattern
-        noise = np.random.randint(-10, 10, (height, width, 3))
+        # Add very slight grain using PIL
+        enhancer = ImageEnhance.Brightness(textured)
+        result = enhancer.enhance(0.98)
         
-        # Apply texture subtly
-        textured = np.clip(data.astype(int) + noise * 0.3, 0, 255)
-        
-        return Image.fromarray(textured.astype(np.uint8))
+        return result
     
     def process_image(self, input_path: Path, output_path: Path) -> None:
         original_img = Image.open(input_path).convert("RGB")
