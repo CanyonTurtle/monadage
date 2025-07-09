@@ -152,6 +152,8 @@ def create_web_app():
             files = data.get('files', [])
             pipeline_steps = data.get('pipeline', [])
             
+            print(f"Processing request - Files: {len(files)}, Pipeline: {pipeline_steps}")
+            
             if not files or not pipeline_steps:
                 return jsonify({
                     'success': False,
@@ -164,35 +166,47 @@ def create_web_app():
             # Process each file
             results = []
             for file_info in files:
+                print(f"Processing file: {file_info}")
                 input_path = os.path.join(app.config['UPLOAD_FOLDER'], file_info['filename'])
                 
                 if not os.path.exists(input_path):
+                    print(f"Input file does not exist: {input_path}")
                     continue
                 
-                # Get pipeline instance first to get correct filename
-                pipeline = get_pipeline(pipeline_steps)
-                
-                # Generate output filename using pipeline's naming convention
-                base_name = file_info['original_name'].rsplit('.', 1)[0]
-                output_filename = f"{base_name}{pipeline.get_output_suffix()}{pipeline.get_output_extension()}"
-                output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_filename)
-                
                 try:
+                    # Get pipeline instance first to get correct filename
+                    print(f"Getting pipeline for steps: {pipeline_steps}")
+                    pipeline = get_pipeline(pipeline_steps)
+                    print(f"Pipeline created: {pipeline}")
+                    
+                    # Generate output filename using pipeline's naming convention
+                    base_name = file_info['original_name'].rsplit('.', 1)[0]
+                    output_filename = f"{base_name}{pipeline.get_output_suffix()}{pipeline.get_output_extension()}"
+                    output_path = os.path.join(app.config['OUTPUT_FOLDER'], output_filename)
+                    print(f"Output path: {output_path}")
+                    
                     # Process the image
+                    print(f"Processing image: {input_path} -> {output_path}")
                     pipeline.process_image(Path(input_path), Path(output_path))
                     
                     if os.path.exists(output_path):
+                        print(f"Output file created successfully: {output_path}")
                         results.append({
                             'original_name': file_info['original_name'],
                             'processed_name': output_filename,
                             'pipeline': pipeline_string,
                             'size': os.path.getsize(output_path)
                         })
+                    else:
+                        print(f"Output file was not created: {output_path}")
                         
                 except Exception as e:
                     print(f"Error processing {file_info['filename']}: {e}")
+                    import traceback
+                    traceback.print_exc()
                     continue
             
+            print(f"Processing complete. Results: {len(results)} files processed")
             return jsonify({
                 'success': True,
                 'results': results
