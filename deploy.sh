@@ -187,6 +187,23 @@ start_services() {
     # Start nginx
     echo "Starting nginx..."
     nginx -c "$NGINX_CONF" -p "$PROJECT_DIR" -e "$LOG_DIR/nginx_startup.log"
+    
+    # Wait for services to fully start
+    echo "Waiting for services to start..."
+    sleep 3
+    
+    # Wait for gunicorn to be responsive (up to 30 seconds)
+    echo "Waiting for gunicorn to be responsive..."
+    for i in {1..30}; do
+        if curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:5000/" | grep -q "200"; then
+            echo "✓ Gunicorn is responding after $i seconds"
+            break
+        elif [ $i -eq 30 ]; then
+            echo "⚠ Gunicorn took longer than expected to start, but continuing..."
+        else
+            sleep 1
+        fi
+    done
 }
 
 # Function to verify deployment
