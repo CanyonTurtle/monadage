@@ -1,0 +1,74 @@
+{
+  "name": "Monadage - Artistic Image Effects",
+  "short_name": "Monadage",
+  "description": "Transform your photos with stunning artistic effects entirely in your browser",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "categories": ["photo", "graphics", "multimedia"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png", 
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshots/mobile.png",
+      "sizes": "400x800", 
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "features": [
+    "19+ artistic effects including Vaporwave, Glitch Art, Neon Edge",
+    "100% client-side processing - your images never leave your device",
+    "Composable pipeline system for chaining effects",
+    "Real-time preview and parameter adjustment",
+    "WebGL-accelerated processing for high performance",
+    "Works offline once loaded",
+    "No file size limits or upload restrictions"
+  ],
+  "shortcuts": [
+    {
+      "name": "Upload Images",
+      "short_name": "Upload",
+      "description": "Upload images to transform",
+      "url": "/?action=upload",
+      "icons": [
+        {
+          "src": "icons/upload-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Popular Effects",
+      "short_name": "Effects",
+      "description": "Browse popular artistic effects",
+      "url": "/?pipeline=vaporwave,glitch_art,neon_edge",
+      "icons": [
+        {
+          "src": "icons/effects-96.png", 
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}
