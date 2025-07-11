@@ -53,8 +53,8 @@ void main() {
     bool isGridLine = (mod(pixelCoord.x, u_grid_size) < 1.0) || (mod(pixelCoord.y, u_grid_size) < 1.0);
     
     if (isGridLine) {
-        // Add 50/255 to each channel, clamped to 1.0 (matching Python exactly)
-        vaporwaveColor = min(vaporwaveColor + (50.0 / 255.0), 1.0);
+        // Use modular arithmetic to create visible grid lines even on bright areas
+        vaporwaveColor = mod(vaporwaveColor + (50.0 / 255.0), 1.0);
     }
     
     // Step 3: Enhance contrast and saturation (matching PIL ImageEnhance)
