@@ -160,11 +160,12 @@ export class WebGLProcessor {
             attribute vec2 a_position;
             attribute vec2 a_texCoord;
             varying vec2 v_texCoord;
+            uniform bool u_flipY;
             
             void main() {
                 gl_Position = vec4(a_position, 0.0, 1.0);
-                // Flip Y coordinate to fix upside-down issue
-                v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
+                // Conditionally flip Y coordinate based on render target
+                v_texCoord = u_flipY ? vec2(a_texCoord.x, 1.0 - a_texCoord.y) : a_texCoord;
             }
         `;
 
@@ -178,7 +179,7 @@ export class WebGLProcessor {
         }
     }
 
-    applyEffect(effectName, params = {}) {
+    applyEffect(effectName, params = {}, flipY = true) {
         const program = this.programs.get(effectName);
         if (!program) {
             throw new Error(`Effect "${effectName}" not loaded`);
@@ -196,6 +197,12 @@ export class WebGLProcessor {
 
         // Set up uniforms
         this.setupUniforms(program, effectName, params);
+
+        // Set flip Y uniform
+        const flipYLocation = this.gl.getUniformLocation(program, 'u_flipY');
+        if (flipYLocation) {
+            this.gl.uniform1i(flipYLocation, flipY ? 1 : 0);
+        }
 
         // Bind texture
         this.gl.activeTexture(this.gl.TEXTURE0);
@@ -328,8 +335,8 @@ export class WebGLProcessor {
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffers[index]);
             }
             
-            // Apply the effect
-            this.applyEffect(effect.name, effect.params);
+            // Apply the effect - only flip Y on the final render to canvas
+            this.applyEffect(effect.name, effect.params, isLastEffect);
             
             // Set up for next iteration
             if (!isLastEffect) {
