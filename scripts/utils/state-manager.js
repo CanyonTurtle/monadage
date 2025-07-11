@@ -84,6 +84,9 @@ export class ReactiveState {
     }
 }
 
+// Import effect registry to get available effects
+import { effectRegistry } from '../effects/effect-registry.js';
+
 // Global application state
 export const appState = new ReactiveState({
     // Image management
@@ -92,47 +95,10 @@ export const appState = new ReactiveState({
     
     // Pipeline management
     pipeline: [],
-    availableEffects: [
-        {
-            name: 'vaporwave',
-            displayName: 'Vaporwave',
-            description: 'Retro aesthetic with pink/purple gradients and grid overlays',
-            category: 'artistic',
-            params: {}
-        },
-        {
-            name: 'glitch_art',
-            displayName: 'Glitch Art',
-            description: 'Digital corruption with pixel corruption and color channel shifts',
-            category: 'artistic',
-            params: {}
-        },
-        {
-            name: 'neon_edge',
-            displayName: 'Neon Edge',
-            description: 'Glowing edge detection on dark backgrounds',
-            category: 'artistic',
-            params: {}
-        },
-        {
-            name: 'oil_painting',
-            displayName: 'Oil Painting',
-            description: 'Artistic oil painting simulation',
-            category: 'artistic',
-            params: {
-                u_intensity: { type: 'float', default: 1.0, min: 0.5, max: 2.0, label: 'Brush Size' }
-            }
-        },
-        {
-            name: 'pixel_sort',
-            displayName: 'Pixel Sort',
-            description: 'Algorithmic pixel sorting for abstract patterns',
-            category: 'abstract',
-            params: {
-                u_threshold: { type: 'float', default: 0.5, min: 0.0, max: 1.0, label: 'Threshold' }
-            }
-        }
-    ],
+    get availableEffects() {
+        // Get effects from registry instead of hardcoded array
+        return effectRegistry.getAllEffects();
+    },
     
     // Processing state
     processing: false,
@@ -278,7 +244,7 @@ export class StateManager {
     }
     
     addEffectToPipeline(effectName, insertIndex = -1) {
-        const effectTemplate = appState.availableEffects.find(effect => effect.name === effectName);
+        const effectTemplate = effectRegistry.getEffect(effectName);
         if (!effectTemplate) {
             throw new Error(`Effect "${effectName}" not found`);
         }
@@ -286,7 +252,7 @@ export class StateManager {
         const effect = {
             ...effectTemplate,
             id: this.generateId(),
-            params: this.initializeParams(effectTemplate.params)
+            params: this.initializeParams(effectTemplate.parameters)
         };
         
         const newPipeline = [...appState.pipeline];
@@ -376,7 +342,7 @@ export class StateManager {
     }
     
     getEffectByName(name) {
-        return appState.availableEffects.find(effect => effect.name === name);
+        return effectRegistry.getEffect(name);
     }
     
     // Debug helpers

@@ -28,13 +28,9 @@ export class ImageProcessor {
     }
 
     async loadAllShaders() {
-        const shaderEffects = [
-            'vaporwave',
-            'glitch_art', 
-            'neon_edge',
-            'oil_painting',
-            'pixel_sort'
-        ];
+        // Get all effect names from the registry
+        const allEffects = effectRegistry.getAllEffects();
+        const shaderEffects = allEffects.map(effect => effect.name);
 
         const loadPromises = shaderEffects.map(effectName => 
             this.loadShader(effectName)
