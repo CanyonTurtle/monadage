@@ -241,6 +241,12 @@ export class WebGLProcessor {
         // Set default parameters using effect registry if available
         const defaultParams = this.getDefaultParams(effectName, params);
         
+        // Debug logging for parameter passing
+        if (effectName === 'vaporwave') {
+            console.log('Vaporwave effect called with params:', params);
+            console.log('Merged with defaults:', defaultParams);
+        }
+        
         // Set custom parameters
         Object.entries(defaultParams).forEach(([key, value]) => {
             const location = this.gl.getUniformLocation(program, key);

@@ -3,6 +3,8 @@
  * Generates UI controls based on effect parameter schemas
  */
 
+import { appState } from '../utils/state-manager.js';
+
 export class ParameterControlsBuilder {
     static createControl(paramName, paramConfig, currentValue, onValueChange) {
         const container = document.createElement('div');
@@ -190,6 +192,8 @@ export class EffectControlsPanel {
         this.webglProcessor = webglProcessor;
         this.currentEffect = null;
         this.parameterValues = {};
+        this.previewImage = null;
+        this.debounceTimer = null;
     }
     
     showEffectControls(effectName) {
@@ -246,10 +250,26 @@ export class EffectControlsPanel {
     updateParameter(paramName, value) {
         this.parameterValues[paramName] = value;
         
-        // Trigger effect update if we have a current effect
-        if (this.currentEffect && this.webglProcessor) {
-            this.applyCurrentEffect();
+        // Debug logging
+        console.log(`Parameter update: ${paramName} = ${value}`);
+        console.log('All parameter values:', this.parameterValues);
+        
+        // Update the pipeline state with new parameter values
+        if (this.currentEffect) {
+            this.updatePipelineEffectParams(this.currentEffect.name, paramName, value);
         }
+        
+        // Debounce updates for smooth real-time preview
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer);
+        }
+        
+        this.debounceTimer = setTimeout(() => {
+            // Trigger effect update if we have a current effect and preview image
+            if (this.currentEffect && this.webglProcessor && this.previewImage) {
+                this.applyCurrentEffect();
+            }
+        }, 100); // 100ms debounce
     }
     
     resetToDefaults() {
@@ -268,17 +288,61 @@ export class EffectControlsPanel {
     }
     
     applyCurrentEffect() {
-        if (!this.currentEffect || !this.webglProcessor) return;
+        if (!this.currentEffect || !this.webglProcessor || !this.previewImage) return;
+        
+        // Validate that previewImage is a proper image element
+        if (!(this.previewImage instanceof HTMLImageElement) || !this.previewImage.complete || !this.previewImage.naturalWidth) {
+            console.warn('Preview image not ready for processing');
+            return;
+        }
         
         try {
+            // Load the preview image and apply the effect
+            this.webglProcessor.loadImage(this.previewImage);
             this.webglProcessor.applyEffect(this.currentEffect.name, this.parameterValues);
         } catch (error) {
             console.error('Failed to apply effect:', error);
         }
     }
     
+    setPreviewImage(imageElement) {
+        // Validate image element
+        if (!imageElement || !(imageElement instanceof HTMLImageElement)) {
+            console.warn('Invalid image element provided to setPreviewImage');
+            return;
+        }
+        
+        this.previewImage = imageElement;
+        
+        // If we have a current effect, apply it immediately for preview (if image is loaded)
+        if (this.currentEffect && this.webglProcessor && imageElement.complete && imageElement.naturalWidth) {
+            this.applyCurrentEffect();
+        }
+    }
+    
     getCurrentParameters() {
         return { ...this.parameterValues };
+    }
+    
+    updatePipelineEffectParams(effectName, paramName, value) {
+        // Find the effect in the pipeline and update its parameters
+        const effectIndex = appState.pipeline.findIndex(effect => effect.name === effectName);
+        if (effectIndex !== -1) {
+            const updatedEffect = { ...appState.pipeline[effectIndex] };
+            if (!updatedEffect.params) {
+                updatedEffect.params = {};
+            }
+            updatedEffect.params[paramName] = value;
+            
+            // Update the pipeline
+            const newPipeline = [...appState.pipeline];
+            newPipeline[effectIndex] = updatedEffect;
+            appState.pipeline = newPipeline;
+            
+            console.log(`Updated pipeline effect ${effectName}:`, updatedEffect);
+        } else {
+            console.warn(`Effect ${effectName} not found in pipeline`);
+        }
     }
     
     hide() {

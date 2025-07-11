@@ -4,10 +4,10 @@ uniform vec2 u_resolution;
 uniform float u_time;
 
 // Configurable parameters
-uniform float quantization_levels; // Number of color levels (default: 8.0)
-uniform float grid_size;           // Grid spacing in pixels (default: 20.0)
-uniform float hue_shift;           // Hue shift amount (default: 0.8)
-uniform float saturation_boost;    // Saturation multiplier (default: 1.5)
+uniform float u_quantization_levels; // Number of color levels (default: 8.0)
+uniform float u_grid_size;           // Grid spacing in pixels (default: 20.0)
+uniform float u_hue_shift;           // Hue shift amount (default: 0.8)
+uniform float u_saturation_boost;    // Saturation multiplier (default: 1.5)
 
 varying vec2 v_texCoord;
 
@@ -39,9 +39,9 @@ void main() {
     vec3 hsv = rgb2hsv(originalColor.rgb);
     
     // Configurable hue shift (default matches Python: 0.8)
-    hsv.x = mod(hsv.x + hue_shift, 1.0);
+    hsv.x = mod(hsv.x + u_hue_shift, 1.0);
     // Configurable saturation boost (default matches Python: 1.5)
-    hsv.y = min(1.0, hsv.y * saturation_boost);
+    hsv.y = min(1.0, hsv.y * u_saturation_boost);
     // Exact match: v = v ** 0.8
     hsv.z = pow(hsv.z, 0.8);
     
@@ -50,7 +50,7 @@ void main() {
     // Step 2: Add grid overlay with configurable spacing
     // Python: data[:, x] = np.minimum(data[:, x] + 50, 255) every grid_size pixels
     vec2 pixelCoord = v_texCoord * u_resolution;
-    bool isGridLine = (mod(pixelCoord.x, grid_size) < 1.0) || (mod(pixelCoord.y, grid_size) < 1.0);
+    bool isGridLine = (mod(pixelCoord.x, u_grid_size) < 1.0) || (mod(pixelCoord.y, u_grid_size) < 1.0);
     
     if (isGridLine) {
         // Add 50/255 to each channel, clamped to 1.0 (matching Python exactly)
@@ -68,7 +68,7 @@ void main() {
     vaporwaveColor = mix(vec3(luminance), vaporwaveColor, 1.5);
     
     // Step 4: Quantize with configurable levels
-    vaporwaveColor = quantize(vaporwaveColor, quantization_levels);
+    vaporwaveColor = quantize(vaporwaveColor, u_quantization_levels);
     
     // Ensure we stay in valid range
     vaporwaveColor = clamp(vaporwaveColor, 0.0, 1.0);

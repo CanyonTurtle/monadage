@@ -46,13 +46,13 @@ export class EffectRegistry {
             shaderPath: '/client/shaders/fragments/vaporwave.glsl',
             category: 'retro',
             getDefaults: () => ({
-                quantization_levels: 8.0,
-                grid_size: 20.0,
-                hue_shift: 0.8,
-                saturation_boost: 1.5
+                u_quantization_levels: 8.0,
+                u_grid_size: 20.0,
+                u_hue_shift: 0.8,
+                u_saturation_boost: 1.5
             }),
             parameters: {
-                quantization_levels: {
+                u_quantization_levels: {
                     type: 'range',
                     label: 'Quantization Levels',
                     min: 2,
@@ -61,7 +61,7 @@ export class EffectRegistry {
                     step: 1,
                     description: 'Number of color levels to quantize to'
                 },
-                grid_size: {
+                u_grid_size: {
                     type: 'range',
                     label: 'Grid Size',
                     min: 10,
@@ -70,7 +70,7 @@ export class EffectRegistry {
                     step: 5,
                     description: 'Spacing between grid lines in pixels'
                 },
-                hue_shift: {
+                u_hue_shift: {
                     type: 'range',
                     label: 'Hue Shift',
                     min: 0,
@@ -79,7 +79,7 @@ export class EffectRegistry {
                     step: 0.1,
                     description: 'Amount to shift hue towards pink/purple'
                 },
-                saturation_boost: {
+                u_saturation_boost: {
                     type: 'range',
                     label: 'Saturation Boost',
                     min: 1,

@@ -4,6 +4,7 @@
  */
 
 import { appState, stateManager } from '../utils/state-manager.js';
+import { effectRegistry } from '../effects/effect-registry.js';
 
 export class PipelineBuilder extends HTMLElement {
     constructor() {
@@ -164,6 +165,11 @@ export class PipelineBuilder extends HTMLElement {
                 .btn-icon.remove:hover {
                     background: #fef2f2;
                     color: #ef4444;
+                }
+                
+                .btn-icon.edit:hover {
+                    background: #f0f9ff;
+                    color: #3b82f6;
                 }
                 
                 .effect-description {
@@ -469,6 +475,14 @@ export class PipelineBuilder extends HTMLElement {
                         <div class="effect-header">
                             <div class="effect-name">${effect.displayName}</div>
                             <div class="effect-actions">
+                                ${this.hasParameters(effect.name) ? `
+                                    <button class="btn-icon edit" onclick="this.getRootNode().host.editEffect('${effect.name}')" title="Edit Parameters">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                    </button>
+                                ` : ''}
                                 <button class="btn-icon" onclick="this.getRootNode().host.moveEffectUp(${index})" 
                                         ${index === 0 ? 'disabled' : ''} title="Move Up">
                                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -687,6 +701,25 @@ export class PipelineBuilder extends HTMLElement {
 
     updateParam(effectId, paramName, value) {
         stateManager.updateEffectParams(effectId, paramName, value);
+    }
+
+    hasParameters(effectName) {
+        const effect = effectRegistry.getEffect(effectName);
+        return effect && Object.keys(effect.parameters || {}).length > 0;
+    }
+
+    editEffect(effectName) {
+        // Signal the effect controls component to show controls for this effect
+        const effectControls = document.getElementById('effect-controls');
+        if (effectControls) {
+            effectControls.selectEffect(effectName);
+            
+            // Scroll the controls into view
+            effectControls.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }
     }
 
     async processImages() {
