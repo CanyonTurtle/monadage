@@ -157,7 +157,7 @@ class MonadageApp {
             cycleEffect(); // Initial call
         };
         
-        sourceImg.src = 'examples/source.png';
+        sourceImg.src = 'examples/source.jpeg';
     }
 
     setupKeyboardShortcuts() {
