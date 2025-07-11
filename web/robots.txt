@@ -1,8 +1,0 @@
-User-agent: *
-Allow: /
-Allow: /examples/
-Disallow: /api/
-Disallow: /temp/
-
-# Sitemap
-Sitemap: https://monadage.canyonturtle.org/sitemap.xml
