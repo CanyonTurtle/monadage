@@ -129,6 +129,74 @@ export class PipelineBuilder extends HTMLElement {
                     border-right: 1px solid #e5e7eb;
                 }
                 
+                /* Mobile responsive layout */
+                @media (max-width: 640px) {
+                    .effect-content {
+                        min-height: auto;
+                    }
+                    
+                    .effect-main {
+                        flex-direction: column;
+                        height: auto;
+                    }
+                    
+                    .effect-preview {
+                        width: 100%;
+                        border-right: none;
+                        border-bottom: 1px solid #e5e7eb;
+                        position: relative;
+                        z-index: 1;
+                    }
+                    
+                    .preview-half {
+                        width: 50%;
+                        height: 6rem;
+                        position: relative;
+                        z-index: 1;
+                    }
+                    
+                    .effect-info {
+                        padding: 0.75rem;
+                        position: relative;
+                        z-index: 2;
+                        background: white;
+                        min-height: 5rem;
+                    }
+                    
+                    .effect-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 0.5rem;
+                        margin-bottom: 0.75rem;
+                    }
+                    
+                    .effect-name {
+                        font-size: 0.875rem;
+                        line-height: 1.25rem;
+                        word-break: break-word;
+                    }
+                    
+                    .effect-actions {
+                        align-self: flex-end;
+                        margin-top: -0.5rem;
+                    }
+                    
+                    .preview-canvas {
+                        position: relative;
+                        z-index: 1;
+                    }
+                    
+                    .effect-parameters {
+                        margin-top: 0.5rem;
+                    }
+                    
+                    .effect-description {
+                        font-size: 0.75rem;
+                        line-height: 1.25;
+                        margin: 0.5rem 0;
+                    }
+                }
+                
                 .preview-half {
                     width: 6rem;
                     height: 6rem;
@@ -439,7 +507,6 @@ export class PipelineBuilder extends HTMLElement {
                     
                     .effect-preview {
                         width: 100%;
-                        height: 3rem;
                         border-right: none;
                         border-bottom: 1px solid #e5e7eb;
                     }
