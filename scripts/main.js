@@ -95,27 +95,45 @@ class MonadageApp {
             return;
         }
         
-        // Load the source image
-        const sourceImg = new Image();
-        sourceImg.crossOrigin = 'anonymous';
+        // Example images list for variety
+        const exampleImages = [
+            'examples/source.jpeg',
+            'examples/example.png', 
+            'examples/example2.jpeg'
+        ];
         
-        sourceImg.onload = () => {
-            // Set canvas size to match actual image resolution for best quality
-            demoCanvas.width = sourceImg.naturalWidth;
-            demoCanvas.height = sourceImg.naturalHeight;
+        // Cycle through effects with randomization
+        const effects = appState.availableEffects;
+        let currentDemoEffect = null;
+        let currentDemoParams = null;
             
-            // Cycle through effects
-            const effects = appState.availableEffects;
-            let currentIndex = 0;
+            const getRandomParams = (effectDef) => {
+                const params = {};
+                if (effectDef.parameters) {
+                    Object.entries(effectDef.parameters).forEach(([paramName, paramConfig]) => {
+                        const min = paramConfig.min || 0;
+                        const max = paramConfig.max || 1;
+                        const randomValue = min + Math.random() * (max - min);
+                        params[paramName] = randomValue;
+                    });
+                }
+                return params;
+            };
             
             const cycleEffect = async () => {
                 if (effects.length === 0) return;
                 
-                const effect = effects[currentIndex];
+                // Pick a random effect
+                const randomIndex = Math.floor(Math.random() * effects.length);
+                const effect = effects[randomIndex];
+                
+                // Pick a random image
+                const randomImagePath = exampleImages[Math.floor(Math.random() * exampleImages.length)];
                 
                 // Fade out current content
                 demoCanvas.style.opacity = '0';
                 demoName.style.opacity = '0';
+                document.getElementById('try-out-btn').style.opacity = '0';
                 
                 // Wait for fade out
                 await new Promise(resolve => setTimeout(resolve, 250));
@@ -123,19 +141,46 @@ class MonadageApp {
                 // Update effect name
                 demoName.textContent = effect.displayName;
                 
+                // Update the original image preview to match
+                const originalImg = document.querySelector('img[alt="Original sample image"]');
+                if (originalImg) {
+                    originalImg.src = randomImagePath;
+                }
+                
                 try {
+                    // Load the random image
+                    const randomImg = new Image();
+                    randomImg.crossOrigin = 'anonymous';
+                    
+                    await new Promise((resolve, reject) => {
+                        randomImg.onload = resolve;
+                        randomImg.onerror = reject;
+                        randomImg.src = randomImagePath;
+                    });
+                    
+                    // Update canvas size for the new image
+                    demoCanvas.width = randomImg.naturalWidth;
+                    demoCanvas.height = randomImg.naturalHeight;
+                    
                     // Create a mock image data object
                     const imageData = {
-                        element: sourceImg,
+                        element: randomImg,
                         name: 'demo.png',
-                        width: sourceImg.naturalWidth,
-                        height: sourceImg.naturalHeight
+                        width: randomImg.naturalWidth,
+                        height: randomImg.naturalHeight
                     };
                     
-                    // Process with current effect (structure it properly)
+                    // Generate random parameters for this effect
+                    const randomParams = getRandomParams(effect);
+                    
+                    // Store current demo effect and parameters for "Try Out" button
+                    currentDemoEffect = effect;
+                    currentDemoParams = randomParams;
+                    
+                    // Process with current effect using random parameters
                     const effectPipeline = [{
                         name: effect.name,
-                        params: {} // Use default parameters
+                        params: randomParams
                     }];
                     const result = await this.imageProcessor.processImage(imageData, effectPipeline);
                     
@@ -149,6 +194,7 @@ class MonadageApp {
                         // Fade in new content
                         demoCanvas.style.opacity = '1';
                         demoName.style.opacity = '1';
+                        document.getElementById('try-out-btn').style.opacity = '1';
                     };
                     tempImg.src = result.dataUrl;
                     
@@ -164,17 +210,69 @@ class MonadageApp {
                     // Fade in even on error
                     demoCanvas.style.opacity = '1';
                     demoName.style.opacity = '1';
+                    document.getElementById('try-out-btn').style.opacity = '1';
                 }
-                
-                currentIndex = (currentIndex + 1) % effects.length;
             };
             
-            // Start cycling
-            setInterval(cycleEffect, 3000); // Slower for real processing
+            // Set up "Try Out" button functionality
+            const tryOutBtn = document.getElementById('try-out-btn');
+            if (tryOutBtn) {
+                tryOutBtn.addEventListener('click', async () => {
+                    if (currentDemoEffect && currentDemoParams) {
+                        // If no images uploaded, add the current demo image
+                        if (appState.images.length === 0) {
+                            try {
+                                // Get the current demo image path
+                                const currentImagePath = document.querySelector('img[alt="Original sample image"]').src;
+                                
+                                // Convert to blob and create a file
+                                const response = await fetch(currentImagePath);
+                                const blob = await response.blob();
+                                const fileName = currentImagePath.split('/').pop();
+                                const file = new File([blob], fileName, { type: blob.type });
+                                
+                                // Create image element
+                                const img = new Image();
+                                img.src = URL.createObjectURL(blob);
+                                
+                                await new Promise((resolve) => {
+                                    img.onload = resolve;
+                                });
+                                
+                                // Add to state manager
+                                stateManager.addImage(file, img);
+                                
+                            } catch (error) {
+                                console.warn('Failed to add demo image:', error);
+                            }
+                        }
+                        
+                        // Clear current pipeline and add the demo effect
+                        appState.pipeline = [];
+                        
+                        // Add the current demo effect with its parameters
+                        stateManager.addEffectToPipeline(currentDemoEffect.name);
+                        
+                        // Find the newly added effect and update its parameters
+                        const newEffect = appState.pipeline[appState.pipeline.length - 1];
+                        if (newEffect) {
+                            Object.keys(currentDemoParams).forEach(paramName => {
+                                stateManager.updateEffectParams(newEffect.id, paramName, currentDemoParams[paramName]);
+                            });
+                        }
+                        
+                        // Scroll to the pipeline section
+                        const pipelineSection = document.querySelector('pipeline-builder');
+                        if (pipelineSection) {
+                            pipelineSection.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                });
+            }
+            
+            // Start cycling with longer duration to appreciate each effect
+            setInterval(cycleEffect, 5000); // 5 seconds per effect
             cycleEffect(); // Initial call
-        };
-        
-        sourceImg.src = 'examples/source.jpeg';
     }
 
     setupKeyboardShortcuts() {

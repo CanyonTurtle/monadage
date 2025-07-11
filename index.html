@@ -75,25 +75,30 @@
             <p class="text-sm text-green-600 font-medium">✓ 100% Client-Side • ✓ No Uploads • ✓ Privacy First</p>
             
             <!-- Demo Section -->
-            <section class="flex items-center justify-center gap-4 md:gap-8 mb-6 mt-6" aria-label="Effect demonstration">
-                <div class="text-center">
+            <section class="flex items-start justify-center gap-4 md:gap-8 mb-6 mt-6" aria-label="Effect demonstration">
+                <div class="flex flex-col items-center">
                     <img src="examples/source.jpeg" 
                          alt="Original sample image" 
-                         class="w-48 h-48 md:w-64 md:h-64 object-cover rounded-lg border-2 border-gray-300 shadow-sm">
+                         class="w-32 h-32 md:w-40 md:h-40 object-cover rounded-lg border-2 border-gray-300 shadow-sm">
                     <div class="text-xs md:text-sm text-gray-500 mt-2">Original</div>
                 </div>
                 
-                <div class="text-gray-400" aria-hidden="true">
+                <div class="text-gray-400 self-center" aria-hidden="true">
                     <svg class="w-6 h-6 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                     </svg>
                 </div>
                 
-                <div class="text-center">
+                <div class="flex flex-col items-center">
                     <div class="relative">
-                        <canvas id="demo-canvas" class="w-48 h-48 md:w-64 md:h-64 object-cover rounded-lg border-2 border-purple-300 shadow-sm transition-opacity duration-500"></canvas>
+                        <canvas id="demo-canvas" class="w-32 h-32 md:w-40 md:h-40 object-cover rounded-lg border-2 border-purple-300 shadow-sm transition-opacity duration-500"></canvas>
                     </div>
-                    <div id="demo-effect-name" class="text-xs md:text-sm text-gray-500 mt-2 transition-opacity duration-500">Vaporwave</div>
+                    <div class="flex items-center justify-center gap-2 mt-2">
+                        <div id="demo-effect-name" class="text-xs md:text-sm text-gray-500 transition-opacity duration-500">Vaporwave</div>
+                        <button id="try-out-btn" class="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700 transition-colors duration-200 opacity-0 transition-opacity duration-500">
+                            Try Out
+                        </button>
+                    </div>
                 </div>
             </section>
         </header>
