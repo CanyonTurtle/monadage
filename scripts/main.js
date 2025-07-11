@@ -100,9 +100,9 @@ class MonadageApp {
         sourceImg.crossOrigin = 'anonymous';
         
         sourceImg.onload = () => {
-            // Set canvas size to match demo size
-            demoCanvas.width = 128;
-            demoCanvas.height = 128;
+            // Set canvas size to match actual image resolution for best quality
+            demoCanvas.width = sourceImg.naturalWidth;
+            demoCanvas.height = sourceImg.naturalHeight;
             
             // Cycle through effects
             const effects = appState.availableEffects;
@@ -112,6 +112,15 @@ class MonadageApp {
                 if (effects.length === 0) return;
                 
                 const effect = effects[currentIndex];
+                
+                // Fade out current content
+                demoCanvas.style.opacity = '0';
+                demoName.style.opacity = '0';
+                
+                // Wait for fade out
+                await new Promise(resolve => setTimeout(resolve, 250));
+                
+                // Update effect name
                 demoName.textContent = effect.displayName;
                 
                 try {
@@ -136,6 +145,10 @@ class MonadageApp {
                     tempImg.onload = () => {
                         ctx.clearRect(0, 0, demoCanvas.width, demoCanvas.height);
                         ctx.drawImage(tempImg, 0, 0, demoCanvas.width, demoCanvas.height);
+                        
+                        // Fade in new content
+                        demoCanvas.style.opacity = '1';
+                        demoName.style.opacity = '1';
                     };
                     tempImg.src = result.dataUrl;
                     
@@ -147,6 +160,10 @@ class MonadageApp {
                                    effect.name === 'glitch_art' ? '#ef4444' :
                                    effect.name === 'neon_edge' ? '#06b6d4' : '#6b7280';
                     ctx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
+                    
+                    // Fade in even on error
+                    demoCanvas.style.opacity = '1';
+                    demoName.style.opacity = '1';
                 }
                 
                 currentIndex = (currentIndex + 1) % effects.length;
