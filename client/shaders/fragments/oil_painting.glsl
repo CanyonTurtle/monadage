@@ -4,31 +4,31 @@ uniform vec2 u_resolution;
 uniform float u_intensity; // Brush size multiplier (default: 1.0)
 varying vec2 v_texCoord;
 
-// Oil painting effect using statistical approach
+// Oil painting effect using statistical approach with fixed loops
 void main() {
     vec2 texelSize = 1.0 / u_resolution;
     float radius = 4.0 * u_intensity;
-    int levels = 20;
     
     vec3 finalColor = vec3(0.0);
     float maxIntensity = 0.0;
     
-    // For each intensity level
+    // For each intensity level (fixed loop)
     for (int level = 0; level < 20; level++) {
-        if (level >= levels) break;
-        
         vec3 levelSum = vec3(0.0);
         float levelCount = 0.0;
-        float targetIntensity = float(level) / float(levels);
+        float targetIntensity = float(level) / 20.0;
         
-        // Sample surrounding pixels within radius
-        for (float x = -radius; x <= radius; x += 1.0) {
-            for (float y = -radius; y <= radius; y += 1.0) {
-                vec2 offset = vec2(x, y) * texelSize;
-                vec2 sampleUV = v_texCoord + offset;
+        // Sample surrounding pixels within radius (fixed loops)
+        for (int x = -8; x <= 8; x++) {
+            for (int y = -8; y <= 8; y++) {
+                float fx = float(x);
+                float fy = float(y);
                 
-                // Check if within circle
-                if (length(vec2(x, y)) > radius) continue;
+                // Check if within dynamic radius
+                if (length(vec2(fx, fy)) > radius) continue;
+                
+                vec2 offset = vec2(fx, fy) * texelSize;
+                vec2 sampleUV = v_texCoord + offset;
                 
                 // Sample pixel
                 vec4 sampleColor = texture2D(u_texture, sampleUV);
@@ -36,7 +36,7 @@ void main() {
                 
                 // Check if this pixel belongs to current level
                 float levelDiff = abs(intensity - targetIntensity);
-                if (levelDiff < 1.0 / float(levels)) {
+                if (levelDiff < 0.05) { // 1.0 / 20.0 = 0.05
                     levelSum += sampleColor.rgb;
                     levelCount += 1.0;
                 }
@@ -46,7 +46,6 @@ void main() {
         // Calculate average for this level
         if (levelCount > 0.0) {
             vec3 levelAverage = levelSum / levelCount;
-            float levelIntensity = (levelAverage.r + levelAverage.g + levelAverage.b) / 3.0;
             
             // Use the level with highest count (most representative)
             if (levelCount > maxIntensity) {
