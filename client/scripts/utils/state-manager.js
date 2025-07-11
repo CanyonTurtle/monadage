@@ -8,23 +8,32 @@ export class ReactiveState {
         this.listeners = new Set();
         this.state = { ...initialState };
         
-        // Create proxy to intercept state changes
-        this.proxy = new Proxy(this.state, {
+        // Create a proxy that returns this instance but intercepts property access
+        return new Proxy(this, {
             set: (target, property, value) => {
-                const oldValue = target[property];
-                target[property] = value;
+                if (property === 'listeners' || property === 'state' || typeof target[property] === 'function') {
+                    // Don't intercept internal properties or methods
+                    target[property] = value;
+                    return true;
+                }
                 
-                // Notify listeners of change
-                this.notify(property, value, oldValue);
+                // Intercept state property changes
+                const oldValue = target.state[property];
+                target.state[property] = value;
+                target.notify(property, value, oldValue);
                 return true;
             },
             
             get: (target, property) => {
-                return target[property];
+                if (property === 'listeners' || property === 'state' || typeof target[property] === 'function') {
+                    // Return internal properties or methods
+                    return target[property];
+                }
+                
+                // Return state properties
+                return target.state[property];
             }
         });
-        
-        return this.proxy;
     }
     
     subscribe(listener) {
@@ -57,7 +66,7 @@ export class ReactiveState {
         };
         
         try {
-            updateFn(this.proxy);
+            updateFn(this);
         } finally {
             // Restore original notify and send batched update
             this.notify = originalNotify;
