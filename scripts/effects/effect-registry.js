@@ -19,7 +19,6 @@ export class EffectRegistry {
             name,
             displayName: config.displayName || name,
             description: config.description || '',
-            shaderPath: config.shaderPath,
             parameters: config.parameters || {},
             category: config.category || 'general',
             getDefaults: config.getDefaults || (() => ({}))
@@ -43,7 +42,6 @@ export class EffectRegistry {
         this.registerEffect('vaporwave', {
             displayName: 'Vaporwave',
             description: 'Retro aesthetic with neon colors and grid overlays',
-            shaderPath: '/shaders/fragments/vaporwave.glsl',
             category: 'retro',
             getDefaults: () => ({
                 u_quantization_levels: 8.0,
@@ -95,7 +93,6 @@ export class EffectRegistry {
         this.registerEffect('oil_painting', {
             displayName: 'Oil Painting',
             description: 'Painterly effect with brush strokes',
-            shaderPath: '/shaders/fragments/oil_painting.glsl',
             category: 'artistic',
             getDefaults: () => ({
                 u_intensity: 1.0
@@ -117,7 +114,6 @@ export class EffectRegistry {
         this.registerEffect('glitch_art', {
             displayName: 'Glitch Art',
             description: 'Digital corruption effects',
-            shaderPath: '/shaders/fragments/glitch_art.glsl',
             category: 'digital',
             getDefaults: () => ({
                 u_intensity: 0.5
@@ -139,7 +135,6 @@ export class EffectRegistry {
         this.registerEffect('neon_edge', {
             displayName: 'Neon Edge',
             description: 'Glowing edge detection',
-            shaderPath: '/shaders/fragments/neon_edge.glsl',
             category: 'digital',
             getDefaults: () => ({
                 u_intensity: 1.0
@@ -161,7 +156,6 @@ export class EffectRegistry {
         this.registerEffect('pixel_sort', {
             displayName: 'Pixel Sort',
             description: 'Sorted pixel displacement',
-            shaderPath: '/shaders/fragments/pixel_sort.glsl',
             category: 'digital',
             getDefaults: () => ({
                 u_intensity: 0.5

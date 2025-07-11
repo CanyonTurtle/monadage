@@ -925,14 +925,15 @@ export class PipelineBuilder extends HTMLElement {
         const effect = appState.pipeline.find(e => e.id === effectId);
         if (!effect) return;
         
-        const effectDef = effectRegistry.getEffect(effect.name);
-        if (!effectDef) return;
-        
         const processor = this.previewProcessors.get(effectId);
         if (!processor) return;
         
         try {
-            const response = await fetch(effectDef.shaderPath);
+            // Use the same shader loading approach as the main image processor
+            const response = await fetch(`shaders/fragments/${effect.name}.glsl`);
+            if (!response.ok) {
+                throw new Error(`Failed to load shader: ${response.status}`);
+            }
             const shaderSource = await response.text();
             processor.loadShaderEffect(effect.name, shaderSource);
         } catch (error) {
