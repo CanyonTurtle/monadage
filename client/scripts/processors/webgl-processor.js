@@ -47,7 +47,8 @@ export class WebGLProcessor {
             
             void main() {
                 gl_Position = vec4(a_position, 0.0, 1.0);
-                v_texCoord = a_texCoord;
+                // Flip Y coordinate to fix upside-down issue
+                v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
             }
         `;
 
@@ -155,7 +156,8 @@ export class WebGLProcessor {
             
             void main() {
                 gl_Position = vec4(a_position, 0.0, 1.0);
-                v_texCoord = a_texCoord;
+                // Flip Y coordinate to fix upside-down issue
+                v_texCoord = vec2(a_texCoord.x, 1.0 - a_texCoord.y);
             }
         `;
 
@@ -313,17 +315,8 @@ export class WebGLProcessor {
         const pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
         this.gl.readPixels(0, 0, this.canvas.width, this.canvas.height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
         
-        // WebGL coordinates are flipped vertically, so we need to flip the image
-        const flippedPixels = new Uint8Array(pixels.length);
-        const rowSize = this.canvas.width * 4;
-        
-        for (let y = 0; y < this.canvas.height; y++) {
-            const srcOffset = y * rowSize;
-            const dstOffset = (this.canvas.height - 1 - y) * rowSize;
-            flippedPixels.set(pixels.subarray(srcOffset, srcOffset + rowSize), dstOffset);
-        }
-        
-        return new ImageData(new Uint8ClampedArray(flippedPixels), this.canvas.width, this.canvas.height);
+        // No need to flip - we handle this in the vertex shader now
+        return new ImageData(new Uint8ClampedArray(pixels), this.canvas.width, this.canvas.height);
     }
 
     exportCanvas(format = 'image/png', quality = 0.9) {
