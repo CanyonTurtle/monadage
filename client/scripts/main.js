@@ -10,7 +10,6 @@ import { ImageProcessor } from './processors/image-processor.js';
 import './components/image-uploader.js';
 import './components/pipeline-builder.js';
 import './components/result-viewer.js';
-import './components/effect-controls.js';
 
 class MonadageApp {
     constructor() {
@@ -35,9 +34,6 @@ class MonadageApp {
             
             // Initialize image processor
             this.imageProcessor = new ImageProcessor();
-            
-            // Connect image processor to effect controls
-            this.setupEffectControls();
             
             // Set up error handling
             this.setupErrorHandling();
@@ -86,15 +82,6 @@ class MonadageApp {
         });
     }
 
-    setupEffectControls() {
-        // Wait for DOM to be ready
-        setTimeout(() => {
-            const effectControls = document.getElementById('effect-controls');
-            if (effectControls && this.imageProcessor) {
-                effectControls.setImageProcessor(this.imageProcessor);
-            }
-        }, 100);
-    }
 
     async setupDemoEffect() {
         const demoCanvas = document.getElementById('demo-canvas');
