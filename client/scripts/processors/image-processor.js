@@ -4,11 +4,13 @@
  */
 
 import { WebGLProcessor } from './webgl-processor.js';
+import { effectRegistry } from '../effects/effect-registry.js';
 
 export class ImageProcessor {
     constructor() {
         this.canvas = document.getElementById('processing-canvas');
         this.webglProcessor = new WebGLProcessor(this.canvas);
+        this.webglProcessor.setEffectRegistry(effectRegistry);
         this.shadersLoaded = false;
         this.shaderCache = new Map();
         

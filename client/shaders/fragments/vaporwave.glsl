@@ -2,9 +2,16 @@ precision mediump float;
 uniform sampler2D u_texture;
 uniform vec2 u_resolution;
 uniform float u_time;
+
+// Configurable parameters
+uniform float quantization_levels; // Number of color levels (default: 8.0)
+uniform float grid_size;           // Grid spacing in pixels (default: 20.0)
+uniform float hue_shift;           // Hue shift amount (default: 0.8)
+uniform float saturation_boost;    // Saturation multiplier (default: 1.5)
+
 varying vec2 v_texCoord;
 
-// HSV conversion functions
+// HSV conversion functions (accurate)
 vec3 rgb2hsv(vec3 c) {
     vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
     vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
@@ -20,37 +27,51 @@ vec3 hsv2rgb(vec3 c) {
     return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+// Stronger quantization function matching PIL's quantize behavior
+vec3 quantize(vec3 color, float levels) {
+    return floor(color * (levels - 1.0) + 0.5) / (levels - 1.0);
+}
+
 void main() {
     vec4 originalColor = texture2D(u_texture, v_texCoord);
     
-    // Convert to HSV for color manipulation
+    // Step 1: Apply vaporwave color transformation (HSV)
     vec3 hsv = rgb2hsv(originalColor.rgb);
     
-    // Apply vaporwave color transformation
-    hsv.x = mod(hsv.x + 0.8, 1.0);    // Shift hue towards pink/purple
-    hsv.y = min(1.0, hsv.y * 1.5);    // Increase saturation
-    hsv.z = pow(hsv.z, 0.8);          // Enhance contrast
+    // Configurable hue shift (default matches Python: 0.8)
+    hsv.x = mod(hsv.x + hue_shift, 1.0);
+    // Configurable saturation boost (default matches Python: 1.5)
+    hsv.y = min(1.0, hsv.y * saturation_boost);
+    // Exact match: v = v ** 0.8
+    hsv.z = pow(hsv.z, 0.8);
     
     vec3 vaporwaveColor = hsv2rgb(hsv);
     
-    // Add grid overlay
-    vec2 grid = mod(gl_FragCoord.xy, 20.0);
-    float gridIntensity = step(18.0, grid.x) + step(18.0, grid.y);
-    gridIntensity = min(gridIntensity, 1.0);
+    // Step 2: Add grid overlay with configurable spacing
+    // Python: data[:, x] = np.minimum(data[:, x] + 50, 255) every grid_size pixels
+    vec2 pixelCoord = v_texCoord * u_resolution;
+    bool isGridLine = (mod(pixelCoord.x, grid_size) < 1.0) || (mod(pixelCoord.y, grid_size) < 1.0);
     
-    // Blend grid with base color
-    vaporwaveColor = mix(vaporwaveColor, vaporwaveColor + vec3(0.2, 0.1, 0.3), gridIntensity * 0.6);
+    if (isGridLine) {
+        // Add 50/255 to each channel, clamped to 1.0 (matching Python exactly)
+        vaporwaveColor = min(vaporwaveColor + (50.0 / 255.0), 1.0);
+    }
     
-    // Add subtle scanlines
-    float scanline = sin(gl_FragCoord.y * 0.1) * 0.05;
-    vaporwaveColor += scanline;
+    // Step 3: Enhance contrast and saturation (matching PIL ImageEnhance)
+    // Contrast enhancement: 1.3x
+    vec3 gray = vec3(0.299, 0.587, 0.114);
+    float luminance = dot(vaporwaveColor, gray);
+    vaporwaveColor = mix(vec3(luminance), vaporwaveColor, 1.3);
     
-    // Add slight chromatic aberration for retro feel
-    vec2 offset = vec2(0.002, 0.0);
-    float r = texture2D(u_texture, v_texCoord + offset).r;
-    float b = texture2D(u_texture, v_texCoord - offset).b;
-    vaporwaveColor.r = mix(vaporwaveColor.r, r, 0.3);
-    vaporwaveColor.b = mix(vaporwaveColor.b, b, 0.3);
+    // Color/saturation enhancement: 1.5x
+    luminance = dot(vaporwaveColor, gray);
+    vaporwaveColor = mix(vec3(luminance), vaporwaveColor, 1.5);
+    
+    // Step 4: Quantize with configurable levels
+    vaporwaveColor = quantize(vaporwaveColor, quantization_levels);
+    
+    // Ensure we stay in valid range
+    vaporwaveColor = clamp(vaporwaveColor, 0.0, 1.0);
     
     gl_FragColor = vec4(vaporwaveColor, originalColor.a);
 }

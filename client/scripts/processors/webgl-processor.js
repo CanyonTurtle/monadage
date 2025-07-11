@@ -139,10 +139,17 @@ export class WebGLProcessor {
         // Upload image data
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageElement);
         
-        // Update canvas size to match image
-        this.canvas.width = imageElement.naturalWidth || imageElement.width;
-        this.canvas.height = imageElement.naturalHeight || imageElement.height;
-        this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        // Update canvas size to match image while maintaining aspect ratio
+        const imgWidth = imageElement.naturalWidth || imageElement.width;
+        const imgHeight = imageElement.naturalHeight || imageElement.height;
+        
+        // Set canvas to exact image dimensions to preserve aspect ratio
+        this.canvas.width = imgWidth;
+        this.canvas.height = imgHeight;
+        this.canvas.style.maxWidth = '100%';
+        this.canvas.style.height = 'auto';
+        
+        this.gl.viewport(0, 0, imgWidth, imgHeight);
         
         this.currentTexture = texture;
         return texture;
@@ -188,7 +195,7 @@ export class WebGLProcessor {
         this.setupAttributes(program);
 
         // Set up uniforms
-        this.setupUniforms(program, params);
+        this.setupUniforms(program, effectName, params);
 
         // Bind texture
         this.gl.activeTexture(this.gl.TEXTURE0);
@@ -218,7 +225,7 @@ export class WebGLProcessor {
         }
     }
 
-    setupUniforms(program, params) {
+    setupUniforms(program, effectName, params) {
         // Set resolution uniform
         const resolutionLocation = this.gl.getUniformLocation(program, 'u_resolution');
         if (resolutionLocation) {
@@ -231,8 +238,11 @@ export class WebGLProcessor {
             this.gl.uniform1f(timeLocation, performance.now() / 1000.0);
         }
 
+        // Set default parameters using effect registry if available
+        const defaultParams = this.getDefaultParams(effectName, params);
+        
         // Set custom parameters
-        Object.entries(params).forEach(([key, value]) => {
+        Object.entries(defaultParams).forEach(([key, value]) => {
             const location = this.gl.getUniformLocation(program, key);
             if (location) {
                 if (typeof value === 'number') {
@@ -252,6 +262,24 @@ export class WebGLProcessor {
                 }
             }
         });
+    }
+
+    getDefaultParams(effectName, params) {
+        // Get defaults from effect registry if available
+        if (this.effectRegistry) {
+            const effect = this.effectRegistry.getEffect(effectName);
+            if (effect && effect.getDefaults) {
+                const shaderDefaults = effect.getDefaults();
+                return { ...shaderDefaults, ...params };
+            }
+        }
+        
+        // Fallback to just user params
+        return params;
+    }
+    
+    setEffectRegistry(effectRegistry) {
+        this.effectRegistry = effectRegistry;
     }
 
     processImageChain(imageElement, effectChain) {

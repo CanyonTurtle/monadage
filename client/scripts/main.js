@@ -122,8 +122,12 @@ class MonadageApp {
                         height: sourceImg.naturalHeight
                     };
                     
-                    // Process with current effect
-                    const result = await this.imageProcessor.processImage(imageData, [effect]);
+                    // Process with current effect (structure it properly)
+                    const effectPipeline = [{
+                        name: effect.name,
+                        params: {} // Use default parameters
+                    }];
+                    const result = await this.imageProcessor.processImage(imageData, effectPipeline);
                     
                     // Draw result to demo canvas
                     const ctx = demoCanvas.getContext('2d');
