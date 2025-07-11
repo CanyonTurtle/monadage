@@ -82,64 +82,77 @@ class MonadageApp {
         });
     }
 
-    setupDemoEffect() {
+    async setupDemoEffect() {
         const demoCanvas = document.getElementById('demo-canvas');
         const demoName = document.getElementById('demo-effect-name');
         
         if (!demoCanvas || !demoName) return;
         
-        // Create a simple gradient for demo
-        const ctx = demoCanvas.getContext('2d');
-        const gradient = ctx.createLinearGradient(0, 0, demoCanvas.width, demoCanvas.height);
-        gradient.addColorStop(0, '#3b82f6');
-        gradient.addColorStop(1, '#8b5cf6');
+        // Wait for image processor to be ready
+        if (!this.imageProcessor || !this.imageProcessor.shadersLoaded) {
+            setTimeout(() => this.setupDemoEffect(), 500);
+            return;
+        }
         
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
+        // Load the source image
+        const sourceImg = new Image();
+        sourceImg.crossOrigin = 'anonymous';
         
-        // Cycle through effect names
-        const effects = appState.availableEffects;
-        let currentIndex = 0;
-        
-        const cycleEffect = () => {
-            if (effects.length === 0) return;
+        sourceImg.onload = () => {
+            // Set canvas size to match demo size
+            demoCanvas.width = 128;
+            demoCanvas.height = 128;
             
-            const effect = effects[currentIndex];
-            demoName.textContent = effect.displayName;
+            // Cycle through effects
+            const effects = appState.availableEffects;
+            let currentIndex = 0;
             
-            // Add simple visual variation based on effect
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
+            const cycleEffect = async () => {
+                if (effects.length === 0) return;
+                
+                const effect = effects[currentIndex];
+                demoName.textContent = effect.displayName;
+                
+                try {
+                    // Create a mock image data object
+                    const imageData = {
+                        element: sourceImg,
+                        name: 'demo.png',
+                        width: sourceImg.naturalWidth,
+                        height: sourceImg.naturalHeight
+                    };
+                    
+                    // Process with current effect
+                    const result = await this.imageProcessor.processImage(imageData, [effect]);
+                    
+                    // Draw result to demo canvas
+                    const ctx = demoCanvas.getContext('2d');
+                    const tempImg = new Image();
+                    tempImg.onload = () => {
+                        ctx.clearRect(0, 0, demoCanvas.width, demoCanvas.height);
+                        ctx.drawImage(tempImg, 0, 0, demoCanvas.width, demoCanvas.height);
+                    };
+                    tempImg.src = result.dataUrl;
+                    
+                } catch (error) {
+                    console.warn('Demo effect failed:', effect.name, error);
+                    // Fallback to solid color
+                    const ctx = demoCanvas.getContext('2d');
+                    ctx.fillStyle = effect.name === 'vaporwave' ? '#8b5cf6' : 
+                                   effect.name === 'glitch_art' ? '#ef4444' :
+                                   effect.name === 'neon_edge' ? '#06b6d4' : '#6b7280';
+                    ctx.fillRect(0, 0, demoCanvas.width, demoCanvas.height);
+                }
+                
+                currentIndex = (currentIndex + 1) % effects.length;
+            };
             
-            // Add effect-specific overlay
-            switch (effect.name) {
-                case 'vaporwave':
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.lineWidth = 1;
-                    for (let i = 0; i < demoCanvas.width; i += 20) {
-                        ctx.beginPath();
-                        ctx.moveTo(i, 0);
-                        ctx.lineTo(i, demoCanvas.height);
-                        ctx.stroke();
-                    }
-                    break;
-                case 'glitch_art':
-                    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-                    ctx.fillRect(5, 0, demoCanvas.width - 10, demoCanvas.height);
-                    break;
-                case 'neon_edge':
-                    ctx.strokeStyle = '#00ffff';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(2, 2, demoCanvas.width - 4, demoCanvas.height - 4);
-                    break;
-            }
-            
-            currentIndex = (currentIndex + 1) % effects.length;
+            // Start cycling
+            setInterval(cycleEffect, 3000); // Slower for real processing
+            cycleEffect(); // Initial call
         };
         
-        // Start cycling
-        setInterval(cycleEffect, 2000);
-        cycleEffect(); // Initial call
+        sourceImg.src = 'examples/source.png';
     }
 
     setupKeyboardShortcuts() {
